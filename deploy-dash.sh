@@ -43,7 +43,7 @@ print_params() {
 
 deploy_dash() {
   # TODO: exit if an azure command fails
-  azure login
+  # azure login
   azure config mode asm
 
   declare -a account_names
@@ -53,10 +53,18 @@ deploy_dash() {
     account_name="$NAME_PREFIX$i"
     account_names[$i]=$account_name
     # TODO: location as input parameter
-    azure storage account create -l "$LOCATION" --type LRS "$account_name"
+    # azure storage account create -l "$LOCATION" --type LRS "$account_name"
   done
 
   write_first_part
+
+  # TODO: generate random
+  hash="ZRhGxdtiHhG7"
+  dash_account_name="${NAME_PREFIX}${hash}"
+  dash_account_key=$(head -c 64 /dev/urandom | base64)
+  echo '      <Setting name="AccountName" value="'"$dash_account_name"'" />' >> $CSCONFIG_FILE
+  echo '      <Setting name="AccountKey" value="'"$dash_account_key"'" />' >> $CSCONFIG_FILE
+  echo '      <Setting name="SecondaryAccountKey" value="" />' >> $CSCONFIG_FILE
 
   declare -i i=0
   for account_name in ${account_names[@]}; do
@@ -68,9 +76,12 @@ deploy_dash() {
   done
 
   write_final_part
+
+  print_info $dash_account_name $dash_account_key
 }
 
 write_first_part() {
+# TODO: Instances count??
   cat>$CSCONFIG_FILE<<EOF
 <?xml version="1.0" encoding="utf-8"?>
 <ServiceConfiguration serviceName="DashServer.Azure" xmlns="http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceConfiguration" osFamily="4" osVersion="*" schemaVersion="2014-06.2.4">
@@ -78,9 +89,6 @@ write_first_part() {
     <Instances count="1" />
     <ConfigurationSettings>
       <Setting name="Microsoft.WindowsAzure.Plugins.Diagnostics.ConnectionString" value="" />
-      <Setting name="AccountName" value="cbdashtest1" />
-      <Setting name="AccountKey" value="wCNvIdXcltACBiDUMyO0BflZpKmjseplqOlzE62tx87qnkwpUMBV/GQhrscW9lmdZVT0x8DilYqUoHMNBlVIGg==" />
-      <Setting name="SecondaryAccountKey" value="" />
 EOF
 }
 
@@ -99,6 +107,11 @@ write_final_part() {
   </Role>
 </ServiceConfiguration>
 EOF
+}
+
+print_info() {
+  echo "AccountName = $1"
+  echo "AccountKey = $2"
 }
 
 usage() {
