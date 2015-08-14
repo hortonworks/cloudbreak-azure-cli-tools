@@ -43,7 +43,7 @@ print_params() {
 
 deploy_dash() {
   # TODO: exit if an azure command fails
-  # azure login
+  azure login
   azure config mode asm
 
   declare -a account_names
@@ -53,7 +53,7 @@ deploy_dash() {
     account_name="$NAME_PREFIX$i"
     account_names[$i]=$account_name
     # TODO: location as input parameter
-    # azure storage account create -l "$LOCATION" --type LRS "$account_name"
+    azure storage account create -l "$LOCATION" --type LRS "$account_name"
   done
 
   write_first_part
@@ -77,11 +77,14 @@ deploy_dash() {
 
   write_final_part
 
+  # TODO: create cloud service with the config file and the package uri 
+  create_cloud_service
+
   print_info $dash_account_name $dash_account_key
 }
 
 write_first_part() {
-# TODO: Instances count??
+  # TODO: Instances count??
   cat>$CSCONFIG_FILE<<EOF
 <?xml version="1.0" encoding="utf-8"?>
 <ServiceConfiguration serviceName="DashServer.Azure" xmlns="http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceConfiguration" osFamily="4" osVersion="*" schemaVersion="2014-06.2.4">
@@ -107,6 +110,11 @@ write_final_part() {
   </Role>
 </ServiceConfiguration>
 EOF
+}
+
+create_cloud_service() {
+  # TODO
+  echo "not implemented"
 }
 
 print_info() {
