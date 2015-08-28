@@ -5,6 +5,10 @@
 : ${LOCATION:="West Europe"}
 : ${CSCONFIG_FILE:="ServiceConfiguration.Cloud.cscfg"}
 
+azure(){
+  ../azure-xplat-cli/bin/azure "$@"
+}
+
 set_params() {
   if [ $# -ne 0 ]; then
     if [ $# -eq 2 ] || [ $# -eq 4 ]; then
@@ -36,8 +40,8 @@ set_params() {
 
 print_params() {
   echo "Number of storage accounts: $STORAGE_ACCOUNTS"
-  echo "Name prefix: $NAME_PREFIX"
-  echo "Location of storage accounts: $LOCATION"
+  echo "Name prefix of accounts and services: $NAME_PREFIX"
+  echo "Location of storage accounts and the DASH cloud service: $LOCATION"
 }
 
 deploy_dash() {
@@ -48,7 +52,6 @@ deploy_dash() {
   declare -a account_names
 
   for ((i=0;i<=STORAGE_ACCOUNTS;i++)); do
-    # TODO: generate a hash to make them unique
     hash=$(cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9'| fold -w 16 | head -n 1)
     account_name="$NAME_PREFIX$i$hash"
     account_names[$i]=$account_name
@@ -58,7 +61,6 @@ deploy_dash() {
 
   write_first_part
 
-  # TODO: generate random
   hash=$(cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9'| fold -w 16 | head -n 1)
   dash_account_name="${NAME_PREFIX}${hash}"
   dash_account_key=$(head -c 64 /dev/urandom | base64)
@@ -75,9 +77,12 @@ deploy_dash() {
     ((i++))
   done
 
+  for ((i=STORAGE_ACCOUNTS;i<=15;i++)); do
+    echo '      <Setting name="ScaleoutStorage'$i'" value="" />' >> $CSCONFIG_FILE
+  done
+
   write_final_part
 
-  # TODO: create cloud service with the config file and the package uri 
   create_cloud_service $dash_account_name
 
   print_info $dash_account_name $dash_account_key
@@ -113,8 +118,10 @@ EOF
 }
 
 create_cloud_service() {
-  # TODO
   echo "creating cloud service $1"
+  azure service create --serviceName $1 --description "Created with dash-deployer" --location "$LOCATION"
+  # TODO: reupload dashServer pacakge to something like hwdash.blob.core.windows.net....
+  azure service deploy --packageUrl "https://marcitesztcli1.blob.core.windows.net/dash/DashServer.Azure.cspkg" --configFile ./ServiceConfiguration.Cloud.cscfg --cloudService $1 --deploymentLabel $1 -d production
 }
 
 print_info() {
