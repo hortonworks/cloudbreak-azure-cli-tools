@@ -35,7 +35,6 @@ set_params() {
 }
 
 print_params() {
-
   echo "Number of storage accounts: $STORAGE_ACCOUNTS"
   echo "Name prefix: $NAME_PREFIX"
   echo "Location of storage accounts: $LOCATION"
@@ -50,7 +49,8 @@ deploy_dash() {
 
   for ((i=0;i<=STORAGE_ACCOUNTS;i++)); do
     # TODO: generate a hash to make them unique
-    account_name="$NAME_PREFIX$i"
+    hash=$(cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9'| fold -w 16 | head -n 1)
+    account_name="$NAME_PREFIX$i$hash"
     account_names[$i]=$account_name
     # TODO: location as input parameter
     azure storage account create -l "$LOCATION" --type LRS "$account_name"
@@ -59,7 +59,7 @@ deploy_dash() {
   write_first_part
 
   # TODO: generate random
-  hash="ZRhGxdtiHhG7"
+  hash=$(cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9'| fold -w 16 | head -n 1)
   dash_account_name="${NAME_PREFIX}${hash}"
   dash_account_key=$(head -c 64 /dev/urandom | base64)
   echo '      <Setting name="AccountName" value="'"$dash_account_name"'" />' >> $CSCONFIG_FILE
@@ -78,7 +78,7 @@ deploy_dash() {
   write_final_part
 
   # TODO: create cloud service with the config file and the package uri 
-  create_cloud_service
+  create_cloud_service $dash_account_name
 
   print_info $dash_account_name $dash_account_key
 }
@@ -114,7 +114,7 @@ EOF
 
 create_cloud_service() {
   # TODO
-  echo "not implemented"
+  echo "creating cloud service $1"
 }
 
 print_info() {
