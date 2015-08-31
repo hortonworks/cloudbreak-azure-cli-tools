@@ -12,7 +12,7 @@ azure(){
 
 set_params() {
   if [ $# -ne 0 ]; then
-    if [ $# -eq 2 ] || [ $# -eq 4 ]; then
+    if [ $# -eq 2 ] || [ $# -eq 4 ] || [ $# -eq 6 ]; then
       for ((i_flag=1;i_flag<=$#;i_flag=i_flag+2)); do
         case "${!i_flag}" in
           --prefix)
@@ -25,6 +25,15 @@ set_params() {
             local re='^[0-9]+$'
             if ! [[ $STORAGE_ACCOUNTS =~ $re ]]; then
               echo "--accounts is not a number!"
+              usage
+            fi
+            ;;
+          --location)
+            local i_value=$((i_flag+1))
+            LOCATION="${!i_value}"
+            local re='^(Central US|South Central US|East US|West US|North Central US|East US 2|North Europe|West Europe|Southeast Asia|East Asia|Japan West|Japan East|Brazil South)$'
+            if ! [[ $LOCATION =~ $re ]]; then
+              echo "Valid locations are Central US, South Central US, East US, West US, North Central US, East US 2, North Europe, West Europe, Southeast Asia, East Asia, Japan West, Japan East, Brazil South"
               usage
             fi
             ;;
@@ -131,7 +140,7 @@ print_info() {
 }
 
 usage() {
-  echo "usage: deploy-dash --accounts num --prefix value"
+  echo "usage: deploy-dash --accounts num --prefix value --location region"
   exit 1
 }
 
