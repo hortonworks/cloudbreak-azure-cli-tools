@@ -24,7 +24,6 @@ set_params() {
             STORAGE_ACCOUNTS="${!i_value}"
             local re='^[0-9]+$'
             if ! [[ $STORAGE_ACCOUNTS =~ $re ]]; then
-              echo "--accounts is not a number!"
               usage
             fi
             ;;
@@ -33,7 +32,6 @@ set_params() {
             LOCATION="${!i_value}"
             local re='^(Central US|South Central US|East US|West US|North Central US|East US 2|North Europe|West Europe|Southeast Asia|East Asia|Japan West|Japan East|Brazil South)$'
             if ! [[ $LOCATION =~ $re ]]; then
-              echo "Valid locations are Central US, South Central US, East US, West US, North Central US, East US 2, North Europe, West Europe, Southeast Asia, East Asia, Japan West, Japan East, Brazil South"
               usage
             fi
             ;;
@@ -65,7 +63,6 @@ deploy_dash() {
     hash=$(cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9'| fold -w 16 | head -n 1)
     account_name="$NAME_PREFIX$i$hash"
     account_names[$i]=$account_name
-    # TODO: location as input parameter
     azure storage account create -l "$LOCATION" --type LRS "$account_name"
   done
 
@@ -95,7 +92,7 @@ deploy_dash() {
 
   create_cloud_service $dash_account_name
 
-  print_info $dash_account_name $dash_account_key
+  print_info $dash_account_name $dash_account_key $account_names
 }
 
 write_first_part() {
@@ -135,12 +132,25 @@ create_cloud_service() {
 }
 
 print_info() {
-  echo "AccountName = $1"
-  echo "AccountKey = $2"
+  echo -e "\nAzure resources created:\n"
+  echo "  Cloud Service:"
+  echo "    $1"
+  echo -e "  Storage Accounts:"
+  for account_name in ${account_names[@]}; do
+    echo -e "    $account_name"
+  done
+  echo -e "\nDASH service details:\n"
+  echo -e "  AccountName = $1"
+  echo -e "  AccountKey = $2\n"
 }
 
 usage() {
-  echo "usage: deploy-dash --accounts num --prefix value --location region"
+  echo -e "Deploy DASH to an Azure cloud service and create its storage accounts\n"
+  echo -e "usage: deploy-dash [options]\n"
+  echo "Options:"
+  echo "  --accounts     number of scaleout storage accounts"
+  echo "  --prefix       name prefix of Azure resources"
+  echo "  --location     Azure region [Central US, South Central US, East US, West US, North Central US, East US 2, North Europe, West Europe, Southeast Asia, East Asia, Japan West, Japan East, Brazil South]"
   exit 1
 }
 
