@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 : ${STORAGE_ACCOUNTS:=5}
 : ${NAME_PREFIX:=dash}
@@ -53,7 +53,6 @@ print_params() {
 }
 
 deploy_dash() {
-  # TODO: exit if an azure command fails
   azure login
   azure config mode asm
 
@@ -127,7 +126,6 @@ EOF
 create_cloud_service() {
   echo "creating cloud service $1"
   azure service create --serviceName $1 --description "Created with dash-deployer" --location "$LOCATION"
-  # TODO: reupload dashServer pacakge to something like hwdash.blob.core.windows.net....
   azure service deploy --packageUrl "https://hwxdash.blob.core.windows.net/v04/DashServer.Azure.cspkg" --configFile ./ServiceConfiguration.Cloud.cscfg --cloudService $1 --deploymentLabel $1 -d production
 }
 
