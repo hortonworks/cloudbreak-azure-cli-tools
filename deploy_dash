@@ -1,12 +1,13 @@
 #!/bin/bash
 
 : ${STORAGE_ACCOUNTS:=5}
-: ${NAME_PREFIX:=cbdash}
+: ${NAME_PREFIX:=dash}
 : ${LOCATION:="West Europe"}
 : ${CSCONFIG_FILE:="ServiceConfiguration.Cloud.cscfg"}
+: ${AZURE_CLI_LOCATION:="/azure"}
 
 azure(){
-  ../azure-xplat-cli/bin/azure "$@"
+  "$AZURE_CLI_LOCATION"/bin/azure "$@"
 }
 
 set_params() {
