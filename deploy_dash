@@ -128,7 +128,7 @@ create_cloud_service() {
   echo "creating cloud service $1"
   azure service create --serviceName $1 --description "Created with dash-deployer" --location "$LOCATION"
   # TODO: reupload dashServer pacakge to something like hwdash.blob.core.windows.net....
-  azure service deploy --packageUrl "https://marcitesztcli1.blob.core.windows.net/dash/DashServer.Azure.cspkg" --configFile ./ServiceConfiguration.Cloud.cscfg --cloudService $1 --deploymentLabel $1 -d production
+  azure service deploy --packageUrl "https://hwxdash.blob.core.windows.net/v04/DashServer.Azure.cspkg" --configFile ./ServiceConfiguration.Cloud.cscfg --cloudService $1 --deploymentLabel $1 -d production
 }
 
 print_info() {
