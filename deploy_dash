@@ -3,7 +3,7 @@
 : ${STORAGE_ACCOUNTS:=5}
 : ${NAME_PREFIX:=dash}
 : ${LOCATION:="West Europe"}
-: ${CSCONFIG_FILE:="ServiceConfiguration.Cloud.cscfg"}
+: ${CSCONFIG_FILE:="/azure/ServiceConfiguration.Cloud.cscfg"}
 : ${AZURE_CLI_LOCATION:="/azure"}
 
 azure(){
@@ -69,7 +69,12 @@ deploy_dash() {
 
   hash=$(cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9'| fold -w 16 | head -n 1)
   dash_account_name="${NAME_PREFIX}${hash}"
-  dash_account_key=$(head -c 64 /dev/urandom | base64)
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    # OSX base64 doesn't have --wrap switch
+    dash_account_key=$(head -c 64 /dev/urandom | base64)
+  else
+    dash_account_key=$(head -c 64 /dev/urandom | base64 --wrap=0)
+  fi
   echo '      <Setting name="AccountName" value="'"$dash_account_name"'" />' >> $CSCONFIG_FILE
   echo '      <Setting name="AccountKey" value="'"$dash_account_key"'" />' >> $CSCONFIG_FILE
   echo '      <Setting name="SecondaryAccountKey" value="" />' >> $CSCONFIG_FILE
@@ -80,7 +85,7 @@ deploy_dash() {
     [[ $i -eq 0 ]] && setting_name="StorageConnectionStringMaster" || setting_name="ScaleoutStorage$((i-1))"
     storage_setting='      <Setting name="'"$setting_name"'" value="DefaultEndpointsProtocol=https;AccountName='$account_name';AccountKey='"$account_key"'" />'
     echo "$storage_setting" >> $CSCONFIG_FILE
-    ((i++))
+    i=$((i+1))
   done
 
   for ((i=STORAGE_ACCOUNTS;i<=15;i++)); do
@@ -126,7 +131,7 @@ EOF
 create_cloud_service() {
   echo "creating cloud service $1"
   azure service create --serviceName $1 --description "Created with dash-deployer" --location "$LOCATION"
-  azure service deploy --packageUrl "https://hwxdash.blob.core.windows.net/v04/DashServer.Azure.cspkg" --configFile ./ServiceConfiguration.Cloud.cscfg --cloudService $1 --deploymentLabel $1 -d production
+  azure service deploy --packageUrl "https://hwxdash.blob.core.windows.net/v04/DashServer.Azure.cspkg" --configFile $CSCONFIG_FILE --cloudService $1 --deploymentLabel $1 -d production
 }
 
 print_info() {
