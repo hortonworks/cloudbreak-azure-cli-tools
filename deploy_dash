@@ -19,6 +19,10 @@ set_params() {
           --prefix)
             local i_value=$((i_flag+1))
             NAME_PREFIX="${!i_value}"
+            local re='^[a-z0-9]{1,10}$'
+            if ! [[ $NAME_PREFIX =~ $re ]]; then
+              usage
+            fi
             ;;
           --accounts)
             local i_value=$((i_flag+1))
@@ -69,7 +73,7 @@ deploy_dash() {
   declare -a account_names
 
   for ((i=0;i<=STORAGE_ACCOUNTS;i++)); do
-    hash=$(cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9'| fold -w 16 | head -n 1)
+    hash=$(cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9'| fold -w 12 | head -n 1)
     account_name="$NAME_PREFIX$i$hash"
     account_names[$i]=$account_name
     azure storage account create -l "$LOCATION" --type LRS "$account_name"
@@ -77,7 +81,7 @@ deploy_dash() {
 
   write_first_part
 
-  hash=$(cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9'| fold -w 16 | head -n 1)
+  hash=$(cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9'| fold -w 12 | head -n 1)
   dash_account_name="${NAME_PREFIX}${hash}"
   if [[ "$OSTYPE" == "darwin"* ]]; then
     # OSX base64 doesn't have --wrap switch
@@ -110,7 +114,6 @@ deploy_dash() {
 }
 
 write_first_part() {
-  # TODO: Instances count??
   cat>$CSCONFIG_FILE<<EOF
 <?xml version="1.0" encoding="utf-8"?>
 <ServiceConfiguration serviceName="DashServer.Azure" xmlns="http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceConfiguration" osFamily="4" osVersion="*" schemaVersion="2014-06.2.4">
@@ -162,7 +165,7 @@ usage() {
   echo -e "usage: deploy-dash [options]\n"
   echo "Options:"
   echo "  --accounts     number of scaleout storage accounts"
-  echo "  --prefix       name prefix of Azure resources"
+  echo "  --prefix       name prefix of Azure resources (between 1 and 10 lower case letters or numbers)"
   echo "  --location     Azure region [Central US, South Central US, East US, West US, North Central US, East US 2, North Europe, West Europe, Southeast Asia, East Asia, Japan West, Japan East, Brazil South]"
   echo "  --instances    number of virtual machines deployed to the cloud service"
   exit 1

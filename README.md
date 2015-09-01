@@ -5,7 +5,8 @@ The project first creates the namespace account and the scaleout storage account
 
 ### Notes
 
-The project uses the Azure Xplat CLI's patched version, because the original version doesn't contain any commands to deploy a package to a cloud service.
+- The project uses the Azure Xplat CLI's patched version, because the original version doesn't contain any commands to deploy a package to a cloud service.
+- The generated Azure resource names include a 12 characters long alphanumeric hash because storage account names should be globally unique in Azure.
 
 ### Usage
 
@@ -19,11 +20,11 @@ docker run -it sequenceiq/dash-deployer:0.4 --accounts 5 --prefix dash --locatio
 
 **--accounts**: The number of *scaleout* storage accounts to create. The number specified here doesn't include the namespace storage account. Default is *5*.
 
-**--prefix**: The name prefix of the storage accounts and cloud service that will be created by the tool. The generated names include a 10 chars alphanumeric hash because storage account names should be globally unique in Azure. Default is *dash*.
+**--prefix**: The name prefix of the storage accounts and cloud service that will be created by the tool. Must be between 1 and 10 characters, only numbers and lowercase letters are accepted. Default is *dash*.
 
 **--location**: The Azure region where the resources will be created. Default is *West Europe*. 
 
-**--instances**: The number of virtual machines to create in the cloud service. Default is *1*
+**--instances**: The number of virtual machines to create in the cloud service. Default is *1*.
 
 #### Without Docker
 
