@@ -3,25 +3,30 @@
 : ${STORAGE_ACCOUNTS:=5}
 : ${INSTANCE_COUNT:=1}
 : ${NAME_PREFIX:=dash}
+: ${APP_NAME:=app}
+: ${APP_PASSWORD:=password}
+: ${APP_SUBSCRIPTION_ID:=sub}
 : ${LOCATION:="West Europe"}
 : ${CSCONFIG_FILE:="/azure/ServiceConfiguration.Cloud.cscfg"}
 : ${AZURE_CLI_LOCATION:="/azure"}
+: ${AZURE_USERNAME:="username"}
+: ${AZURE_PASSWORD:="password"}
 
 azure(){
   "$AZURE_CLI_LOCATION"/bin/azure "$@"
 }
 
-set_params() {
+set_deploy_dash_params() {
   if [ $# -ne 0 ]; then
-    if [ $# -eq 2 ] || [ $# -eq 4 ] || [ $# -eq 6 ] || [ $# -eq 8 ] ; then
-      for ((i_flag=1;i_flag<=$#;i_flag=i_flag+2)); do
+    if [ $# -eq 3 ] || [ $# -eq 5 ] || [ $# -eq 7 ] || [ $# -eq 9 ] || [ $# -eq 11 ] || [ $# -eq 13 ] ; then
+      for ((i_flag=2;i_flag<=$#;i_flag=i_flag+2)); do
         case "${!i_flag}" in
           --prefix)
             local i_value=$((i_flag+1))
             NAME_PREFIX="${!i_value}"
             local re='^[a-z0-9]{1,10}$'
             if ! [[ $NAME_PREFIX =~ $re ]]; then
-              usage
+              deploy_dash_usage
             fi
             ;;
           --accounts)
@@ -29,7 +34,7 @@ set_params() {
             STORAGE_ACCOUNTS="${!i_value}"
             local re='^([1-9]|1[0-6])$'
             if ! [[ $STORAGE_ACCOUNTS =~ $re ]]; then
-              usage
+              deploy_dash_usage
             fi
             ;;
           --location)
@@ -37,7 +42,7 @@ set_params() {
             LOCATION="${!i_value}"
             local re='^(Central US|South Central US|East US|West US|North Central US|East US 2|North Europe|West Europe|Southeast Asia|East Asia|Japan West|Japan East|Brazil South)$'
             if ! [[ $LOCATION =~ $re ]]; then
-              usage
+              deploy_dash_usage
             fi
             ;;
           --instances)
@@ -45,29 +50,88 @@ set_params() {
             INSTANCE_COUNT="${!i_value}"
             local re='^[1-9]$'
             if ! [[ $INSTANCE_COUNT =~ $re ]]; then
-              usage
+              deploy_dash_usage
             fi
             ;;
+          --username)
+            local i_value=$((i_flag+1))
+            AZURE_USERNAME="${!i_value}"
+            ;;
+          --password)
+            local i_value=$((i_flag+1))
+            AZURE_PASSWORD="${!i_value}"
+            ;;
           *)
-            usage
+            deploy_dash_usage
             ;;
         esac
       done
     else
-      usage
+      deploy_dash_usage
     fi
   fi
 }
 
-print_params() {
+set_arm_account_config_params() {
+  if [ $# -ne 0 ]; then
+    if [ $# -eq 3 ] || [ $# -eq 5 ] || [ $# -eq 7 ] || [ $# -eq 9 ] || [ $# -eq 11 ] ; then
+      for ((i_flag=2;i_flag<=$#;i_flag=i_flag+2)); do
+        case "${!i_flag}" in
+          --app_name)
+            local i_value=$((i_flag+1))
+            APP_NAME="${!i_value}"
+            local re='^[a-z0-9]{1,15}$'
+            if ! [[ $APP_NAME =~ $re ]]; then
+              arm_account_config_usage
+            fi
+            ;;
+          --app_password)
+            local i_value=$((i_flag+1))
+            APP_PASSWORD="${!i_value}"
+            local re='^[a-z0-9]{1,15}$'
+            if ! [[ $APP_PASSWORD =~ $re ]]; then
+              arm_account_config_usage
+            fi
+            ;;
+          --subscription_id)
+            local i_value=$((i_flag+1))
+            APP_SUBSCRIPTION_ID="${!i_value}"
+            ;;
+          --username)
+            local i_value=$((i_flag+1))
+            AZURE_USERNAME="${!i_value}"
+            ;;
+          --password)
+            local i_value=$((i_flag+1))
+            AZURE_PASSWORD="${!i_value}"
+            ;;
+          *)
+            echo ${!i_value}
+            arm_account_config_usage
+            ;;
+        esac
+      done
+    else
+      arm_account_config_usage
+    fi
+  fi
+}
+
+print_deploy_dash_params() {
   echo "Number of scaleout storage accounts: $STORAGE_ACCOUNTS"
   echo "Name prefix of accounts and services: $NAME_PREFIX"
   echo "Location of storage accounts and the DASH cloud service: $LOCATION"
   echo "Number of instances in the cloud service: $INSTANCE_COUNT"
 }
 
+print_arm_account_config_params() {
+  echo "Subscription ID: "$APP_SUBSCRIPTION_ID
+  echo "App Name: "$APP_NAME
+  echo "Password: "$APP_PASSWORD
+}
+
 deploy_dash() {
-  azure login
+  azure login --username $AZURE_USERNAME --password $AZURE_PASSWORD
   azure config mode asm
 
   declare -a account_names
@@ -160,7 +224,7 @@ print_info() {
   echo -e "  AccountKey = $2\n"
 }
 
-usage() {
+deploy_dash_usage() {
   echo -e "Deploy DASH to an Azure cloud service and create its storage accounts\n"
   echo -e "usage: deploy-dash [options]\n"
   echo "Options:"
@@ -168,13 +232,60 @@ usage() {
   echo "  --prefix       name prefix of Azure resources (between 1 and 10 lower case letters or numbers)"
   echo "  --location     Azure region [Central US, South Central US, East US, West US, North Central US, East US 2, North Europe, West Europe, Southeast Asia, East Asia, Japan West, Japan East, Brazil South]"
   echo "  --instances    number of virtual machines deployed to the cloud service"
+  echo "  --username     Azure username"
+  echo "  --password     Azure password"
   exit 1
 }
 
+arm_account_config_usage() {
+  echo -e "Configure ARM application\n"
+  echo -e "usage: arm_configure [options]\n"
+  echo "Options:"
+  echo "  --app_name          name of the arm application"
+  echo "  --app_password      password of the arm application"
+  echo "  --subscription_id   subscription-id of your azure account"
+  echo "  --username          Azure username"
+  echo "  --password          Azure password"
+  exit 1
+}
+
+create_arm_account() {
+  azure login --username $AZURE_USERNAME --password $AZURE_PASSWORD
+  azure config mode arm
+
+  TENANT_ID_GREP=$(azure account show|grep "Tenant ID ")
+  TENANT_ID=$(echo $TENANT_ID_GREP|sed "s,data: Tenant ID : ,,g")
+  azure ad app create --name $APP_NAME --home-page http://$APP_NAME --identifier-uris http://$APP_NAME --password $APP_PASSWORD > $APP_NAME.log
+  APPLICATION_ID_GREP=$(grep "Application Id:" $APP_NAME.log -r)
+  APPLICATION_ID=$(echo $APPLICATION_ID_GREP|sed "s,data: Application Id: ,,g")
+  azure ad sp create $APPLICATION_ID > $APP_NAME.log
+  OBJECT_ID_GREP=$(grep "Object Id:" $APP_NAME.log -r)
+  OBJECT_ID=$(echo $OBJECT_ID_GREP|sed "s,data: Object Id: ,,g")
+  azure role assignment create --objectId $OBJECT_ID -o Owner -c /subscriptions/$APP_SUBSCRIPTION_ID
+  azure provider list
+  azure provider register Microsoft.Compute
+  azure provider register Microsoft.Network
+  azure provider register Microsoft.Storage
+
+  echo "Subscription ID: "$APP_SUBSCRIPTION_ID
+  echo "App ID: "$APPLICATION_ID
+  echo "Password: "$APP_PASSWORD
+  echo "App Owner Tenant ID: "$TENANT_ID
+}
+
 main() {
-  set_params "$@"
-  print_params
-  deploy_dash
+  if [ $# -ne 0 ]; then
+    if [ $1 == "deploy_dash" ] ; then
+      set_deploy_dash_params "$@"
+      print_deploy_dash_params
+      deploy_dash
+    elif [ $1 == "arm_configure" ]; then
+      set_arm_account_config_params "$@"
+      print_arm_account_config_params
+      create_arm_account
+    fi;
+  fi;
+
 }
 
 [[ "$0" == "$BASH_SOURCE" ]] && main "$@"
