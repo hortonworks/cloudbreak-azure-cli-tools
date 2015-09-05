@@ -2,11 +2,11 @@
 
 ### Notes
 
-- The project uses the Azure Xplat CLI's patched version, because the original version doesn't contain any commands to deploy a package to a cloud service.
+- The project uses the Azure Xplat CLI's patched version, because the original version doesn't contain any commands to deploy a package to a cloud service and that is needed for the deploy_dash command.
 
 ## Configure Azure Resource manager application easily!
 
-The project first creates the application with the configured name and password after that enable your service which are needed to use ARM.
+The project first creates an Active Directory application with the configured name and password and adds the permissions that are needed to call the Azure Resource Manager API.
 
 ### Usage
 
@@ -35,12 +35,11 @@ The script can be run without Docker, but it is not recommended (see Notes - the
 - get the patched Azure CLI by cloning it from Github: `git clone https://github.com/sequenceiq/azure-xplat-cli.git`
 - run `npm install` in the `azure-xplat-cli` directory
 - set the `AZURE_CLI_LOCATION` environment variable to the `azure-xplat-cli` directory
-- set the `CSCONFIG_FILE` variable to a local path, where the `.cscfg` file will be created
 
 **Example:**
 
 ```
-AZURE_CLI_LOCATION=../azure-xplat-cli CSCONFIG_FILE=./ServiceConfiguration.Cloud.cscfg ./cli_tools arm_configure --app_name myapp --app_password password123 --subscription_id 1234-abcd-efgh-5678 --username example@company.onmicrosoft.com --password password123
+AZURE_CLI_LOCATION=../azure-xplat-cli ./cli_tools arm_configure --app_name myapp --app_password password123 --subscription_id 1234-abcd-efgh-5678 --username example@company.onmicrosoft.com --password password123
 ```
 
 ## Deploy DASH easily!
