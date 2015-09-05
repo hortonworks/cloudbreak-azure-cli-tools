@@ -1,3 +1,5 @@
+#Azure CLI tools
+
 ## Deploy DASH easily!
 
 DASH deployer is a small project that can be used to easily deploy Microsoft's [DASH](https://github.com/MicrosoftDX/Dash) project to an Azure cloud service.
@@ -22,7 +24,7 @@ docker run -it sequenceiq/dash-deployer:0.4 --accounts 5 --prefix dash --locatio
 
 **--prefix**: The name prefix of the storage accounts and cloud service that will be created by the tool. Must be between 1 and 10 characters, only numbers and lowercase letters are accepted. Default is *dash*.
 
-**--location**: The Azure region where the resources will be created. Default is *West Europe*. 
+**--location**: The Azure region where the resources will be created. Default is *West Europe*.
 
 **--instances**: The number of virtual machines to create in the cloud service. Default is *1*.
 
