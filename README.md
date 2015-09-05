@@ -13,7 +13,7 @@ The project first creates the application with the configured name and password 
 #### With Docker (recommended)
 
 ```
-docker run -it sequenceiq/dash-deployer:0.5 arm_configure --app_name myapp --app_password password123 --subscription_id 1234-abcd-efgh-5678 --instances 3 --username example@company.onmicrosoft.com --password password123
+docker run -it sequenceiq/dash-deployer:0.5 arm_configure --app_name myapp --app_password password123 --subscription_id 1234-abcd-efgh-5678 --username example@company.onmicrosoft.com --password password123
 ```
 
 *Options:*
@@ -40,7 +40,7 @@ The script can be run without Docker, but it is not recommended (see Notes - the
 **Example:**
 
 ```
-AZURE_CLI_LOCATION=../azure-xplat-cli CSCONFIG_FILE=./ServiceConfiguration.Cloud.cscfg ./cli_tools arm_configure --app_name myapp --app_password password123 --subscription_id 1234-abcd-efgh-5678 --instances 3 --username example@company.onmicrosoft.com --password password123
+AZURE_CLI_LOCATION=../azure-xplat-cli CSCONFIG_FILE=./ServiceConfiguration.Cloud.cscfg ./cli_tools arm_configure --app_name myapp --app_password password123 --subscription_id 1234-abcd-efgh-5678 --username example@company.onmicrosoft.com --password password123
 ```
 
 ## Deploy DASH easily!
