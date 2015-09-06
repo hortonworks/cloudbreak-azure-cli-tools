@@ -33,6 +33,7 @@ docker run -it sequenceiq/dash-deployer:0.5 arm_configure --app_name myapp --app
 The script can be run without Docker, but it is not recommended (see Notes - the Docker container has all the required dependencies)
 
 - get the patched Azure CLI by cloning it from Github: `git clone https://github.com/sequenceiq/azure-xplat-cli.git`
+- checkout the `release-0.9.8` branch in the `azure-xplat-cli` directory: `git checkout release-0.9.8`
 - run `npm install` in the `azure-xplat-cli` directory
 - set the `AZURE_CLI_LOCATION` environment variable to the `azure-xplat-cli` directory
 
@@ -78,6 +79,7 @@ docker run -it sequenceiq/dash-deployer:0.5 deploy_dash --accounts 5 --prefix da
 The script can be run without Docker, but it is not recommended (see Notes - the Docker container has all the required dependencies)
 
 - get the patched Azure CLI by cloning it from Github: `git clone https://github.com/sequenceiq/azure-xplat-cli.git`
+- checkout the `release-0.9.8` branch in the `azure-xplat-cli` directory: `git checkout release-0.9.8`
 - run `npm install` in the `azure-xplat-cli` directory
 - set the `AZURE_CLI_LOCATION` environment variable to the `azure-xplat-cli` directory
 - set the `CSCONFIG_FILE` variable to a local path, where the `.cscfg` file will be created
