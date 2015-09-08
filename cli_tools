@@ -9,8 +9,6 @@
 : ${LOCATION:="West Europe"}
 : ${CSCONFIG_FILE:="/azure/ServiceConfiguration.Cloud.cscfg"}
 : ${AZURE_CLI_LOCATION:="/azure"}
-: ${AZURE_USERNAME:="username"}
-: ${AZURE_PASSWORD:="password"}
 
 azure(){
   "$AZURE_CLI_LOCATION"/bin/azure "$@"
@@ -131,7 +129,11 @@ print_arm_account_config_params() {
 }
 
 deploy_dash() {
-  azure login --username $AZURE_USERNAME --password $AZURE_PASSWORD
+  if [[ -z "$AZURE_USERNAME" ]] || [[ -z "$AZURE_PASSWORD" ]]; then
+    azure login
+  else
+    azure login --username $AZURE_USERNAME --password $AZURE_PASSWORD
+  fi
   azure config mode asm
 
   declare -a account_names
@@ -250,7 +252,11 @@ arm_account_config_usage() {
 }
 
 create_arm_account() {
-  azure login --username $AZURE_USERNAME --password $AZURE_PASSWORD
+  if [[ -z "$AZURE_USERNAME" ]] || [[ -z "$AZURE_PASSWORD" ]]; then
+    azure login
+  else
+    azure login --username $AZURE_USERNAME --password $AZURE_PASSWORD
+  fi
   azure config mode arm
 
   TENANT_ID_GREP=$(azure account show|grep "Tenant ID ")
