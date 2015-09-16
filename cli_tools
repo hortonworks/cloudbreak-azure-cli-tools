@@ -261,13 +261,18 @@ create_arm_account() {
 
   TENANT_ID_GREP=$(azure account show|grep "Tenant ID ")
   TENANT_ID=$(echo $TENANT_ID_GREP|sed "s,data: Tenant ID : ,,g")
-  azure ad app create --name $APP_NAME --home-page http://$APP_NAME --identifier-uris http://$APP_NAME --password $APP_PASSWORD > $APP_NAME.log
-  APPLICATION_ID_GREP=$(grep "Application Id:" $APP_NAME.log -r)
+  azure ad app create --name $APP_NAME --home-page http://$APP_NAME --identifier-uris http://$APP_NAME --password $APP_PASSWORD > $APP_NAME-ad-create.log
+  echo "waiting..." && sleep 5
+  APPLICATION_ID_GREP=$(grep "Application Id:" $APP_NAME-ad-create.log -r)
   APPLICATION_ID=$(echo $APPLICATION_ID_GREP|sed "s,data: Application Id: ,,g")
-  azure ad sp create $APPLICATION_ID > $APP_NAME.log
-  OBJECT_ID_GREP=$(grep "Object Id:" $APP_NAME.log -r)
+  echo "Your application id: "$APPLICATION_ID
+  azure ad sp create $APPLICATION_ID > $APP_NAME-ad-sp.log
+  echo "waiting..." && sleep 5
+  OBJECT_ID_GREP=$(grep "Object Id:" $APP_NAME-ad-sp.log -r)
   OBJECT_ID=$(echo $OBJECT_ID_GREP|sed "s,data: Object Id: ,,g")
+  echo "Your Object id: "$OBJECT_ID
   azure role assignment create --objectId $OBJECT_ID -o Owner -c /subscriptions/$APP_SUBSCRIPTION_ID
+  echo "waiting..." && sleep 5
   azure provider list
   azure provider register Microsoft.Compute
   azure provider register Microsoft.Network
