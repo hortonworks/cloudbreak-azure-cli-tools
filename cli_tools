@@ -241,7 +241,7 @@ deploy_dash_usage() {
 
 arm_account_config_usage() {
   echo -e "Configure ARM application\n"
-  echo -e "usage: arm_configure [options]\n"
+  echo -e "usage: configure-arm [options]\n"
   echo "Options:"
   echo "  --app_name          name of the arm application"
   echo "  --app_password      password of the arm application"
