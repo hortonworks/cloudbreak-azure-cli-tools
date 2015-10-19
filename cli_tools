@@ -271,8 +271,11 @@ create_arm_account() {
   OBJECT_ID_GREP=$(grep "Object Id:" $APP_NAME-ad-sp.log -r)
   OBJECT_ID=$(echo $OBJECT_ID_GREP|sed "s,data: Object Id: ,,g")
   echo "Your Object id: "$OBJECT_ID
-  azure role assignment create --objectId $OBJECT_ID -o Owner -c /subscriptions/$APP_SUBSCRIPTION_ID
-  echo "waiting..." && sleep 5
+  local ok=-1
+  while [[ ok -ne 0 ]]; do
+    echo "waiting..." && sleep 5
+    { azure role assignment create --objectId $OBJECT_ID -o Owner -c /subscriptions/$APP_SUBSCRIPTION_ID &> $APP_NAME-assign.log; ok=$?; } || true
+  done
   azure provider list
   azure provider register Microsoft.Compute
   azure provider register Microsoft.Network
