@@ -201,7 +201,9 @@ write_final_part() {
       <Setting name="WorkerQueueInitialDelay" value="" />
       <Setting name="WorkerQueueDequeueLimit" value="" />
     </ConfigurationSettings>
-    <Certificates></Certificates>
+    <Certificates>
+      <Certificate name="TlsCertificate" thumbprint="94B7BCFC8224F5FA915EDB30450DAEF125EAA3A8" thumbprintAlgorithm="sha1" />
+    </Certificates>
   </Role>
 </ServiceConfiguration>
 EOF
@@ -210,7 +212,8 @@ EOF
 create_cloud_service() {
   echo "creating cloud service $1"
   azure service create --serviceName $1 --description "Created with dash-deployer" --location "$LOCATION"
-  azure service deploy --packageUrl "https://hwxdash.blob.core.windows.net/v04/DashServer.Azure.cspkg" --configFile $CSCONFIG_FILE --cloudService $1 --deploymentLabel $1 -d production
+  azure service cert create $1 /work/certificate.pfx alma
+  azure service deploy --packageUrl "https://hwxdash.blob.core.windows.net/v05-preview/DashServer.Azure.Https.cspkg" --configFile $CSCONFIG_FILE --cloudService $1 --deploymentLabel $1 -d production
 }
 
 print_info() {
