@@ -13,7 +13,7 @@ The project first creates an Active Directory application with the configured na
 #### With Docker (recommended)
 
 ```
-docker run -it sequenceiq/dash-deployer:0.5 arm_configure --app_name myapp --app_password password123 --subscription_id 1234-abcd-efgh-5678 --username example@company.onmicrosoft.com --password password123
+docker run -it sequenceiq/dash-deployer:0.5 configure-arm --app_name myapp --app_password password123 --subscription_id 1234-abcd-efgh-5678 --username example@company.onmicrosoft.com --password password123
 ```
 
 *Options:*
@@ -40,7 +40,7 @@ The script can be run without Docker, but it is not recommended (see Notes - the
 **Example:**
 
 ```
-AZURE_CLI_LOCATION=../azure-xplat-cli ./cli_tools arm_configure --app_name myapp --app_password password123 --subscription_id 1234-abcd-efgh-5678 --username example@company.onmicrosoft.com --password password123
+AZURE_CLI_LOCATION=../azure-xplat-cli ./cli_tools configure-arm --app_name myapp --app_password password123 --subscription_id 1234-abcd-efgh-5678 --username example@company.onmicrosoft.com --password password123
 ```
 
 ## Deploy DASH easily!
