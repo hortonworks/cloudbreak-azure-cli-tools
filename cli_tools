@@ -86,7 +86,7 @@ set_arm_account_config_params() {
           --app_password)
             local i_value=$((i_flag+1))
             APP_PASSWORD="${!i_value}"
-            local re='^[a-z0-9]{1,15}$'
+            local re='^[a-zA-Z0-9]{1,15}$'
             if ! [[ $APP_PASSWORD =~ $re ]]; then
               arm_account_config_usage
             fi
@@ -293,7 +293,7 @@ main() {
       set_deploy_dash_params "$@"
       print_deploy_dash_params
       deploy_dash
-    elif [ $1 == "arm_configure" ]; then
+    elif [ $1 == "configure-arm" ]; then
       set_arm_account_config_params "$@"
       print_arm_account_config_params
       create_arm_account
