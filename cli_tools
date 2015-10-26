@@ -10,6 +10,26 @@
 : ${CSCONFIG_FILE:="/azure/ServiceConfiguration.Cloud.cscfg"}
 : ${AZURE_CLI_LOCATION:="/azure"}
 
+_retry() {
+  sleepsec=$1;
+  maxret=$2;
+  shift 2;
+  ret=1;
+  while :; do
+    [[ $ret > $maxret ]] && return 1;
+    echo "${ret}.retry..." >&2;
+    eval "$@" && return || errorCode=$?;
+    echo "---> command failed with exit code: $errorCode" >&2;
+    let ret++;
+    sleep "$sleepsec";
+  done
+}
+
+retry() {
+  # 5 sec delay, 9 retry
+  _retry 5 9 "$@"
+}
+
 azure(){
   "$AZURE_CLI_LOCATION"/bin/azure "$@"
 }
@@ -271,11 +291,8 @@ create_arm_account() {
   OBJECT_ID_GREP=$(grep "Object Id:" $APP_NAME-ad-sp.log -r)
   OBJECT_ID=$(echo $OBJECT_ID_GREP|sed "s,data: Object Id: ,,g")
   echo "Your Object id: "$OBJECT_ID
-  local ok=-1
-  while [[ ok -ne 0 ]]; do
-    echo "waiting..." && sleep 5
-    { azure role assignment create --objectId $OBJECT_ID -o Owner -c /subscriptions/$APP_SUBSCRIPTION_ID &> $APP_NAME-assign.log; ok=$?; } || true
-  done
+  echo "waiting..."
+  retry  "azure role assignment create --objectId $OBJECT_ID -o Owner -c /subscriptions/$APP_SUBSCRIPTION_ID &> $APP_NAME-assign.log"
   azure provider list
   azure provider register Microsoft.Compute
   azure provider register Microsoft.Network
