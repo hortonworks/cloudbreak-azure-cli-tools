@@ -13,7 +13,7 @@ The project first creates an Active Directory application with the configured na
 #### With Docker (recommended)
 
 ```
-docker run -it sequenceiq/dash-deployer:0.5 configure-arm --app_name myapp --app_password password123 --subscription_id 1234-abcd-efgh-5678 --username example@company.onmicrosoft.com --password password123
+docker run -it sequenceiq/azure-cli-tools:1.3 configure-arm --app_name myapp --app_password password123 --subscription_id 1234-abcd-efgh-5678 --username example@company.onmicrosoft.com --password password123
 ```
 
 *Options:*
@@ -57,7 +57,7 @@ The project first creates the namespace account and the scaleout storage account
 #### With Docker (recommended)
 
 ```
-docker run -it sequenceiq/dash-deployer:0.5 deploy_dash --accounts 5 --prefix dash --location "West Europe" --instances 3 --username example@company.onmicrosoft.com --password password123
+docker run -it sequenceiq/azure-cli-tools:1.3 deploy_dash --accounts 5 --prefix dash --location "West Europe" --instances 3 --username example@company.onmicrosoft.com --password password123
 ```
 
 *Options:*
