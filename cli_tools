@@ -185,6 +185,10 @@ deploy_dash() {
     [[ $i -eq 0 ]] && setting_name="StorageConnectionStringMaster" || setting_name="ScaleoutStorage$((i-1))"
     storage_setting='      <Setting name="'"$setting_name"'" value="DefaultEndpointsProtocol=https;AccountName='$account_name';AccountKey='"$account_key"'" />'
     echo "$storage_setting" >> $CSCONFIG_FILE
+    if [ $i -eq 0 ]; then
+      master_account_name=$account_name
+      master_account_key=$account_key
+    fi
     i=$((i+1))
   done
 
@@ -194,7 +198,7 @@ deploy_dash() {
 
   write_final_part
 
-  create_cloud_service $dash_account_name
+  create_cloud_service $dash_account_name $master_account_name $master_account_key
 
   print_info $dash_account_name $dash_account_key $account_names
 }
@@ -230,7 +234,11 @@ EOF
 create_cloud_service() {
   echo "creating cloud service $1"
   azure service create --serviceName $1 --description "Created with dash-deployer" --location "$LOCATION"
-  azure service deploy --packageUrl "https://hwxdash.blob.core.windows.net/v05-preview/DashServer.Azure.cspkg" --configFile $CSCONFIG_FILE --cloudService $1 --deploymentLabel $1 -d production
+  echo "downloading DashServer package"
+  curl -O "https://hdpdash.blob.core.windows.net/v05-rc/DashServer.Azure.cspkg"
+  azure storage container create -a $2 -k $3 --container dash-v05
+  azure storage blob upload -a $2 -k $3 --container dash-v05 -f DashServer.Azure.cspkg
+  azure service deploy --packageUrl "https://$2.blob.core.windows.net/dash-v05/DashServer.Azure.cspkg" --configFile $CSCONFIG_FILE --cloudService $1 --deploymentLabel $1 -d production
 }
 
 print_info() {
