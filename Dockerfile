@@ -6,7 +6,9 @@ WORKDIR /bin
 
 RUN apk update && apk add bash coreutils git jq nodejs
 
-RUN git clone https://github.com/sequenceiq/azure-xplat-cli.git /azure
+RUN git clone https://github.com/sequenceiq/azure-xplat-cli.git /azure \
+    && rm -rf /azure/test
+
 RUN cd /azure && git checkout release-0.9.8
 RUN cd /azure && npm install
 
