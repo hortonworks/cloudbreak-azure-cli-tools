@@ -20,7 +20,29 @@ docker run -it --rm \
   -e ARM_SUBSCRIPTION_ID=$ARM_SUBSCRIPTION_ID \
   -e ARM_TENANT_ID=$ARM_TENANT_ID \
   --entrypoint /bin/azure-functions \
-  sequenceiq/azure-cli-tools:1.5
+  sequenceiq/azure-cli-tools:1.6
+```
+
+## Check progress
+
+The `azure-functions` starts the region copies in asynchron. For each region there is
+an azure cli script generate which can check the copy progress. The commands are collected into: `checks.yml`
+
+
+If you want to visually check the progress, and/or block until all copies finished, you can use the 
+[pollprogress](https://github.com/lalyos/pollprogress) tools. For easy usage, we also included it into the 
+docker image.
+
+To check the progress:
+
+```
+docker run -it --rm \
+  -v ~/.azure:/root/.azure \
+  -v $PWD:/work \
+  -w /work \
+  --entrypoint /bin/pollprogress \
+  sequenceiq/azure-cli-tools:1.6 \
+  checks.yml
 ```
 
 ## Configuration
