@@ -1,0 +1,114 @@
+#!/bin/bash
+
+: ${AZURE_USERNAME:=""}
+: ${AZURE_PASSWORD:=""}
+
+if [[ "$TRACE" ]]; then
+    : ${START_TIME:=$(date +%s)}
+    export START_TIME
+    export PS4='+ [TRACE $BASH_SOURCE:$LINENO][ellapsed: $(( $(date +%s) -  $START_TIME ))] '
+    set -x
+fi
+
+debug() {
+  [[ "$DEBUG" ]] && echo "-----> $*" 1>&2
+}
+
+alias r="source $BASH_SOURCE"
+
+azure_login() {
+    local user=$1 passwd=$2
+    
+    if [[ -n "$1" ]] && [[ -n "$2" ]]; then
+      azure login --username $1 --password $2
+    fi
+    azure config mode arm    
+}
+
+azure_copy_everywhere() {
+
+    local imageName=${1:-"$(azure_latest_image_name_form_atlas)"}
+    debug "imageName=$imageName"
+    local vhdPath=$(azure_latest_vhd_by_prefix $imageName)
+    debug "vhdPath=$vhdPath"
+    local sourceBlob="sequenceiqnortheurope2/system/${vhdPath}"
+    debug "sourceBlob=$sourceBlob"
+
+    locations="sequenceiqbrazilsouth2 sequenceiqcentralus2 sequenceiqeastasia2 sequenceiqeastus12 sequenceiqeastus22 sequenceiqjapaneast2 sequenceiqjapanwest2 sequenceiqnortheurope2 sequenceiqorthcentralus2 sequenceiqouthcentralus2 sequenceiqsoutheastasia2 sequenceiqwesteurope2 sequenceiqwestus2"
+    #locations="sequenceiqcentralus2 sequenceiqeastasia2 sequenceiqeastus12 sequenceiqeastus22 sequenceiqjapaneast2 sequenceiqjapanwest2 sequenceiqorthcentralus2 sequenceiqouthcentralus2 sequenceiqsoutheastasia2 sequenceiqwesteurope2"
+
+    rm -f checks.yml
+    for loc in $locations; do
+      local destBlob="$loc/images/${AZURE_DESTINATION_IMAGE_PREFIX}$imageName.vhd"
+      debug "[COPY] $sourceBlob ==> $destBlob"
+      azure_blob_copy \
+        $sourceBlob \
+        $destBlob | tee -a checks.yml
+    done
+}
+
+azure_blob_copy() {
+    declare source=${1:? required source: account/container/blob}
+    declare dest=${2:? required dest: account/container/blob}
+    
+    read source_account source_container source_blob <<< "$(echo $source | sed 's:/: :'| sed 's:/: :')"
+    read dest_account dest_container dest_blob <<< "$(echo $dest | sed 's:/: :'| sed 's:/: :')"
+    local source_key=$(_azure_get_account_key $source_account)
+    local dest_key=$(_azure_get_account_key $dest_account)
+    azure storage blob copy start \
+        -a $source_account \
+        -k $source_key \
+        --source-container $source_container \
+        --source-blob  $source_blob \
+        --dest-account-name $dest_account \
+        --dest-account-key $dest_key \
+        --dest-container $dest_container \
+        --dest-blob $dest_blob \
+        --json 1>&2
+
+    local checkCmd="azure storage blob copy show -a $dest_account -k $dest_key --container $dest_container --blob $dest_blob --json | jq .copyProgress -r"
+    debug "===> CHECK PROGRESS: $checkCmd"
+    echo "$dest_account: $checkCmd"
+}
+
+_azure_get_account_group() {
+    azure storage account list --json |  jq '.[]|select(.name|startswith("'${1:? storage account}'"))|.resourceGroup' -r
+}
+
+_azure_get_account_key() {
+    declare storage=${1:?required: storage account}
+    declare group=${2}
+
+    if [[ "$group" == "" ]]; then
+        group=$(_azure_get_account_group ${storage})
+    fi
+    
+    azure storage account keys list -g $group $storage --json | jq .storageAccountKeys.key1 -r
+}
+
+azure_latest_vhd_by_prefix() {
+    declare imageName=${1:? required: imageName prefix like cloudbreak-2016-02-24}
+
+
+    local key=$(_azure_get_account_key $ARM_STORAGE_ACCOUNT)
+    azure storage blob list \
+        -a $ARM_STORAGE_ACCOUNT \
+        -k $key \
+        --container system \
+        --prefix Microsoft.Compute/Images/packer/${imageName}-osDisk \
+        --json \
+        | jq '.[].name' -r
+}
+
+azure_latest_image_name_form_atlas() {
+  curl -sL https://atlas.hashicorp.com/api/v1/artifacts/sequenceiq/cloudbreak/azure-arm.image/search \
+      |jq '.versions[0].metadata.image_name' -r
+}
+
+main() {
+  : ${DEBUG:=1}
+  azure_login "$AZURE_USERNAME" "$AZURE_PASSWORD"
+  azure_copy_everywhere "$@"
+}
+
+[[ "$0" == "$BASH_SOURCE" ]] && main "$@" || true
