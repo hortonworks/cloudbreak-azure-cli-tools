@@ -19,13 +19,13 @@ docker run -it --rm \
   -e ARM_STORAGE_ACCOUNT=$ARM_STORAGE_ACCOUNT \
   -e ARM_SUBSCRIPTION_ID=$ARM_SUBSCRIPTION_ID \
   -e ARM_TENANT_ID=$ARM_TENANT_ID \
-  --entrypoint /bin/azure-functions \
-  sequenceiq/azure-cli-tools:1.6
+  --entrypoint azure-copy \
+  sequenceiq/azure-cli-tools:0.9.8-v1
 ```
 
 ## Check progress
 
-The `azure-functions` starts the region copies in asynchron. For each region there is
+The `azure-copy` starts the region copies in asynchron. For each region there is
 an azure cli script generate which can check the copy progress. The commands are collected into: `checks.yml`
 
 
@@ -40,8 +40,8 @@ docker run -it --rm \
   -v ~/.azure:/root/.azure \
   -v $PWD:/work \
   -w /work \
-  --entrypoint /bin/pollprogress \
-  sequenceiq/azure-cli-tools:1.6 \
+  --entrypoint pollprogress \
+  sequenceiq/azure-cli-tools:0.9.8-v1 \
   checks.yml
 ```
 
@@ -55,7 +55,10 @@ Destination image will be copied to the `images` container with the name queried
 If you want to customize the destination image name, for example for testimg the process, use the 
 `AZURE_DESTINATION_IMAGE_PREFIX` env variable.
 
-For the above docker command ypu can ad a new `-e` option:
+If you want to use different user than your user on the host, you can pass login information via `AZURE_USERNAME` and `AZURE_PASSWORD` variables.
+
+For the above docker command you can ad a new `-e` options:
+
 ```
 docker run -it --rm \
   -v ~/.azure:/root/.azure \
@@ -68,7 +71,9 @@ docker run -it --rm \
   -e ARM_SUBSCRIPTION_ID=$ARM_SUBSCRIPTION_ID \
   -e ARM_TENANT_ID=$ARM_TENANT_ID \
   -e AZURE_DESTINATION_IMAGE_PREFIX=test- \
-  --entrypoint /bin/azure-functions \
-  sequenceiq/azure-cli-tools:1.5
+  -e AZURE_USERNAME=user \
+  -e AZURE_PASSWORD=passwd \
+  --entrypoint azure-copy \
+  sequenceiq/azure-cli-tools:0.9.8-v1
 ```
 
