@@ -20,7 +20,7 @@ docker run -it --rm \
   -e ARM_SUBSCRIPTION_ID=$ARM_SUBSCRIPTION_ID \
   -e ARM_TENANT_ID=$ARM_TENANT_ID \
   --entrypoint azure-copy \
-  sequenceiq/azure-cli-tools:0.9.8-v1
+  sequenceiq/azure-cli-tools:0.9.8-v2
 ```
 
 ## Check progress
@@ -41,7 +41,7 @@ docker run -it --rm \
   -v $PWD:/work \
   -w /work \
   --entrypoint pollprogress \
-  sequenceiq/azure-cli-tools:0.9.8-v1 \
+  sequenceiq/azure-cli-tools:0.9.8-v2 \
   checks.yml
 ```
 
@@ -53,9 +53,9 @@ Source images are built by packer into `sequenceiqnortheurope2` storage account 
 Destination image will be copied to the `images` container with the name queried from atlas (image_name meta-data)
 
 If you want to customize the destination image name, for example for testimg the process, use the 
-`AZURE_DESTINATION_IMAGE_PREFIX` env variable.
+`ARM_DESTINATION_IMAGE_PREFIX` env variable.
 
-If you want to use different user than your user on the host, you can pass login information via `AZURE_USERNAME` and `AZURE_PASSWORD` variables.
+If you want to use different user than your user on the host, you can pass login information via `ARM_USERNAME` and `ARM_PASSWORD` variables.
 
 For the above docker command you can ad a new `-e` options:
 
@@ -70,10 +70,10 @@ docker run -it --rm \
   -e ARM_STORAGE_ACCOUNT=$ARM_STORAGE_ACCOUNT \
   -e ARM_SUBSCRIPTION_ID=$ARM_SUBSCRIPTION_ID \
   -e ARM_TENANT_ID=$ARM_TENANT_ID \
-  -e AZURE_DESTINATION_IMAGE_PREFIX=test- \
-  -e AZURE_USERNAME=user \
-  -e AZURE_PASSWORD=passwd \
+  -e ARM_DESTINATION_IMAGE_PREFIX=test- \
+  -e ARM_USERNAME=$ARM_USERNAME \
+  -e ARM_PASSWORD=$ARM_PASSWORD \
   --entrypoint azure-copy \
-  sequenceiq/azure-cli-tools:0.9.8-v1
+  sequenceiq/azure-cli-tools:0.9.8-v2
 ```
 
