@@ -20,7 +20,7 @@ docker run -it --rm \
   -e ARM_SUBSCRIPTION_ID=$ARM_SUBSCRIPTION_ID \
   -e ARM_TENANT_ID=$ARM_TENANT_ID \
   --entrypoint azure-copy \
-  sequenceiq/azure-cli-tools:0.9.8-v2
+  sequenceiq/azure-cli-tools:0.9.8-v3
 ```
 
 ## Check progress
@@ -41,7 +41,7 @@ docker run -it --rm \
   -v $PWD:/work \
   -w /work \
   --entrypoint pollprogress \
-  sequenceiq/azure-cli-tools:0.9.8-v2 \
+  sequenceiq/azure-cli-tools:0.9.8-v3 \
   checks.yml
 ```
 
@@ -74,6 +74,6 @@ docker run -it --rm \
   -e ARM_USERNAME=$ARM_USERNAME \
   -e ARM_PASSWORD=$ARM_PASSWORD \
   --entrypoint azure-copy \
-  sequenceiq/azure-cli-tools:0.9.8-v2
+  sequenceiq/azure-cli-tools:0.9.8-v3
 ```
 
