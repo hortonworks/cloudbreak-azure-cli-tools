@@ -20,6 +20,10 @@ azure_login() {
     azure config mode arm    
 }
 
+export_fns() {
+    eval "$(sed -n  's/^\([A-Za-z0-9\-_]*\)() {/export -f \1/p' $BASH_SOURCE)"
+}
+
 azure_copy_everywhere() {
 
     local imageName=${1:-"$(azure_latest_image_name_form_atlas)"}
@@ -33,13 +37,14 @@ azure_copy_everywhere() {
     #locations="sequenceiqcentralus2 sequenceiqeastasia2 sequenceiqeastus12 sequenceiqeastus22 sequenceiqjapaneast2 sequenceiqjapanwest2 sequenceiqorthcentralus2 sequenceiqouthcentralus2 sequenceiqsoutheastasia2 sequenceiqwesteurope2"
 
     rm -f checks.yml
+    export_fns
     for loc in $locations; do
       local destBlob="$loc/images/${ARM_DESTINATION_IMAGE_PREFIX}$imageName.vhd"
       debug "[COPY] $sourceBlob ==> $destBlob"
-      azure_blob_copy \
-        $sourceBlob \
-        $destBlob | tee -a checks.yml
-    done
+      echo $sourceBlob $destBlob
+    done \
+      | xargs -P20 -L1 -I@ env DEBUG=$DEBUG bash -c "azure_blob_copy @" \
+      | tee -a checks.yml
 }
 
 azure_blob_copy() {
