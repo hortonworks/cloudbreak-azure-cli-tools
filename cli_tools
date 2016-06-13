@@ -100,6 +100,7 @@ set_arm_account_config_params() {
             APP_NAME="${!i_value}"
             local re='^[a-z0-9]{1,15}$'
             if ! [[ $APP_NAME =~ $re ]]; then
+              echo "Incorrect format for ${!i_flag}, please use only alphanumeric (lowercase only) characters with size less then or equal to 15"
               arm_account_config_usage
             fi
             ;;
@@ -108,6 +109,7 @@ set_arm_account_config_params() {
             APP_PASSWORD="${!i_value}"
             local re='^[a-zA-Z0-9]{1,15}$'
             if ! [[ $APP_PASSWORD =~ $re ]]; then
+              echo "Incorrect format for ${!i_flag}, please use only alphanumeric characters with size less then or equal to 15"
               arm_account_config_usage
             fi
             ;;
@@ -125,11 +127,13 @@ set_arm_account_config_params() {
             ;;
           *)
             echo ${!i_value}
+            echo "Parameter name ${!i_flag} is invalid"
             arm_account_config_usage
             ;;
         esac
       done
     else
+      echo "Please check the number of parameters, maybe one or more parameter is missing"
       arm_account_config_usage
     fi
   fi
