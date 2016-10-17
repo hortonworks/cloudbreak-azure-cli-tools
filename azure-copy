@@ -65,7 +65,7 @@ azure_blob_copy() {
         --dest-blob $dest_blob \
         --json 1>&2
 
-    local checkCmd="azure storage blob copy show -a $dest_account -k $dest_key --container $dest_container --blob $dest_blob --json | jq 'if .copy.progress then .copy.progress elif .copyProgress then .copyProgress else \"42/42\" end' -r"
+    local checkCmd="azure storage blob copy show -a $dest_account -k $dest_key --container $dest_container --blob $dest_blob --json | tee -a azure-copy-progress.json | jq 'if .copy.progress then .copy.progress elif .copyProgress then .copyProgress else \"42/42\" end' -r"
     debug "===> CHECK PROGRESS: $checkCmd"
     echo "$dest_account: $checkCmd"
 }
