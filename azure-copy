@@ -14,10 +14,10 @@ debug() {
 alias r="source $BASH_SOURCE"
 
 azure_login() {
-    if [[ "$ARM_USERNAME" ]] && [[ "$ARM_PASSWORD" ]]; then
-      azure login --username $ARM_USERNAME --password $ARM_PASSWORD
+    if [[ "$ARM_CLIENT_ID" ]] && [[ "$ARM_CLIENT_SECRET" ]]; then
+      azure login --username $ARM_CLIENT_ID --password $ARM_CLIENT_SECRET --service-principal --tenant $ARM_TENANT_ID
     fi
-    azure config mode arm    
+    azure config mode arm
 }
 
 export_fns() {
@@ -49,7 +49,7 @@ azure_copy_everywhere() {
 azure_blob_copy() {
     declare source=${1:? required source: account/container/blob}
     declare dest=${2:? required dest: account/container/blob}
-    
+
     read source_account source_container source_blob <<< "$(echo $source | sed 's:/: :'| sed 's:/: :')"
     read dest_account dest_container dest_blob <<< "$(echo $dest | sed 's:/: :'| sed 's:/: :')"
     local source_key=$(_azure_get_account_key $source_account)
@@ -81,7 +81,7 @@ _azure_get_account_key() {
     if [[ "$group" == "" ]]; then
         group=$(_azure_get_account_group ${storage})
     fi
-    
+
     azure storage account keys list -g $group $storage --json | jq .storageAccountKeys.key1 -r
 }
 
