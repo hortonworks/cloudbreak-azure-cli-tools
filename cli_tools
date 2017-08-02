@@ -1,13 +1,8 @@
 #!/bin/bash -e
 
-: ${STORAGE_ACCOUNTS:=5}
-: ${INSTANCE_COUNT:=1}
-: ${NAME_PREFIX:=dash}
 : ${APP_NAME:=app}
 : ${APP_PASSWORD:=password}
 : ${APP_SUBSCRIPTION_ID:=sub}
-: ${LOCATION:="West Europe"}
-: ${CSCONFIG_FILE:="/azure/ServiceConfiguration.Cloud.cscfg"}
 : ${AZURE_CLI_LOCATION:="/azure"}
 
 _retry() {
@@ -32,62 +27,6 @@ retry() {
 
 azure(){
   "$AZURE_CLI_LOCATION"/bin/azure "$@"
-}
-
-set_deploy_dash_params() {
-  if [ $# -ne 0 ]; then
-    if [ $# -eq 3 ] || [ $# -eq 5 ] || [ $# -eq 7 ] || [ $# -eq 9 ] || [ $# -eq 11 ] || [ $# -eq 13 ] ; then
-      for ((i_flag=2;i_flag<=$#;i_flag=i_flag+2)); do
-        case "${!i_flag}" in
-          --prefix)
-            local i_value=$((i_flag+1))
-            NAME_PREFIX="${!i_value}"
-            local re='^[a-z0-9]{1,10}$'
-            if ! [[ $NAME_PREFIX =~ $re ]]; then
-              deploy_dash_usage
-            fi
-            ;;
-          --accounts)
-            local i_value=$((i_flag+1))
-            STORAGE_ACCOUNTS="${!i_value}"
-            local re='^([1-9]|1[0-6])$'
-            if ! [[ $STORAGE_ACCOUNTS =~ $re ]]; then
-              deploy_dash_usage
-            fi
-            ;;
-          --location)
-            local i_value=$((i_flag+1))
-            LOCATION="${!i_value}"
-            local re='^(Central US|South Central US|East US|West US|North Central US|East US 2|North Europe|West Europe|Southeast Asia|East Asia|Japan West|Japan East|Brazil South)$'
-            if ! [[ $LOCATION =~ $re ]]; then
-              deploy_dash_usage
-            fi
-            ;;
-          --instances)
-            local i_value=$((i_flag+1))
-            INSTANCE_COUNT="${!i_value}"
-            local re='^[1-9]$'
-            if ! [[ $INSTANCE_COUNT =~ $re ]]; then
-              deploy_dash_usage
-            fi
-            ;;
-          --username)
-            local i_value=$((i_flag+1))
-            AZURE_USERNAME="${!i_value}"
-            ;;
-          --password)
-            local i_value=$((i_flag+1))
-            AZURE_PASSWORD="${!i_value}"
-            ;;
-          *)
-            deploy_dash_usage
-            ;;
-        esac
-      done
-    else
-      deploy_dash_usage
-    fi
-  fi
 }
 
 set_arm_account_config_params() {
@@ -119,11 +58,11 @@ set_arm_account_config_params() {
             ;;
           --username)
             local i_value=$((i_flag+1))
-            AZURE_USERNAME="${!i_value}"
+            ARM_USERNAME="${!i_value}"
             ;;
           --password)
             local i_value=$((i_flag+1))
-            AZURE_PASSWORD="${!i_value}"
+            ARM_PASSWORD="${!i_value}"
             ;;
           *)
             echo ${!i_value}
@@ -139,136 +78,10 @@ set_arm_account_config_params() {
   fi
 }
 
-print_deploy_dash_params() {
-  echo "Number of scaleout storage accounts: $STORAGE_ACCOUNTS"
-  echo "Name prefix of accounts and services: $NAME_PREFIX"
-  echo "Location of storage accounts and the DASH cloud service: $LOCATION"
-  echo "Number of instances in the cloud service: $INSTANCE_COUNT"
-}
-
 print_arm_account_config_params() {
   echo "Subscription ID: "$APP_SUBSCRIPTION_ID
   echo "App Name: "$APP_NAME
   echo "Password: "$APP_PASSWORD
-}
-
-deploy_dash() {
-  if [[ -z "$AZURE_USERNAME" ]] || [[ -z "$AZURE_PASSWORD" ]]; then
-    azure login
-  else
-    azure login --username $AZURE_USERNAME --password $AZURE_PASSWORD
-  fi
-  azure config mode asm
-
-  declare -a account_names
-
-  for ((i=0;i<=STORAGE_ACCOUNTS;i++)); do
-    hash=$(cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9'| fold -w 12 | head -n 1)
-    account_name="$NAME_PREFIX$i$hash"
-    account_names[$i]=$account_name
-    azure storage account create -l "$LOCATION" --type LRS "$account_name"
-  done
-
-  write_first_part
-
-  hash=$(cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9'| fold -w 12 | head -n 1)
-  dash_account_name="${NAME_PREFIX}${hash}"
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    # OSX base64 doesn't have --wrap switch
-    dash_account_key=$(head -c 64 /dev/urandom | base64)
-  else
-    dash_account_key=$(head -c 64 /dev/urandom | base64 --wrap=0)
-  fi
-  echo '      <Setting name="AccountName" value="'"$dash_account_name"'" />' >> $CSCONFIG_FILE
-  echo '      <Setting name="AccountKey" value="'"$dash_account_key"'" />' >> $CSCONFIG_FILE
-  echo '      <Setting name="SecondaryAccountKey" value="" />' >> $CSCONFIG_FILE
-
-  declare -i i=0
-  for account_name in ${account_names[@]}; do
-    account_key=$(azure storage account keys list --json "$account_name" | jq -r .primaryKey)
-    [[ $i -eq 0 ]] && setting_name="StorageConnectionStringMaster" || setting_name="ScaleoutStorage$((i-1))"
-    storage_setting='      <Setting name="'"$setting_name"'" value="DefaultEndpointsProtocol=https;AccountName='$account_name';AccountKey='"$account_key"'" />'
-    echo "$storage_setting" >> $CSCONFIG_FILE
-    if [ $i -eq 0 ]; then
-      master_account_name=$account_name
-      master_account_key=$account_key
-    fi
-    i=$((i+1))
-  done
-
-  for ((i=STORAGE_ACCOUNTS;i<=15;i++)); do
-    echo '      <Setting name="ScaleoutStorage'$i'" value="" />' >> $CSCONFIG_FILE
-  done
-
-  write_final_part
-
-  create_cloud_service $dash_account_name $master_account_name $master_account_key
-
-  print_info $dash_account_name $dash_account_key $account_names
-}
-
-write_first_part() {
-  cat>$CSCONFIG_FILE<<EOF
-<?xml version="1.0" encoding="utf-8"?>
-<ServiceConfiguration serviceName="DashServer.Azure" xmlns="http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceConfiguration" osFamily="4" osVersion="*" schemaVersion="2014-06.2.4">
-  <Role name="DashServer">
-    <Instances count="$INSTANCE_COUNT" />
-    <ConfigurationSettings>
-      <Setting name="Microsoft.WindowsAzure.Plugins.Diagnostics.ConnectionString" value="" />
-EOF
-}
-
-write_final_part() {
-  cat>>$CSCONFIG_FILE<<EOF
-      <Setting name="LogNormalOperations" value="true" />
-      <Setting name="ReplicationPathPattern" value="" />
-      <Setting name="ReplicationMetadataName" value="" />
-      <Setting name="ReplicationMetadataValue" value="" />
-      <Setting name="WorkerQueueName" value="" />
-      <Setting name="AsyncWorkerTimeout" value="" />
-      <Setting name="WorkerQueueInitialDelay" value="" />
-      <Setting name="WorkerQueueDequeueLimit" value="" />
-    </ConfigurationSettings>
-    <Certificates></Certificates>
-  </Role>
-</ServiceConfiguration>
-EOF
-}
-
-create_cloud_service() {
-  echo "creating cloud service $1"
-  azure service create --serviceName $1 --description "Created with dash-deployer" --location "$LOCATION"
-  echo "downloading DashServer package"
-  curl -O "https://hdpdash.blob.core.windows.net/v05-rc/DashServer.Azure.cspkg"
-  azure storage container create -a $2 -k $3 --container dash-v05
-  azure storage blob upload -a $2 -k $3 --container dash-v05 -f DashServer.Azure.cspkg
-  azure service deploy --packageUrl "https://$2.blob.core.windows.net/dash-v05/DashServer.Azure.cspkg" --configFile $CSCONFIG_FILE --cloudService $1 --deploymentLabel $1 -d production
-}
-
-print_info() {
-  echo -e "\nAzure resources created:\n"
-  echo "  Cloud Service:"
-  echo "    $1"
-  echo -e "  Storage Accounts:"
-  for account_name in ${account_names[@]}; do
-    echo -e "    $account_name"
-  done
-  echo -e "\nDASH service details:\n"
-  echo -e "  AccountName = $1"
-  echo -e "  AccountKey = $2\n"
-}
-
-deploy_dash_usage() {
-  echo -e "Deploy DASH to an Azure cloud service and create its storage accounts\n"
-  echo -e "usage: deploy-dash [options]\n"
-  echo "Options:"
-  echo "  --accounts     number of scaleout storage accounts"
-  echo "  --prefix       name prefix of Azure resources (between 1 and 10 lower case letters or numbers)"
-  echo "  --location     Azure region [Central US, South Central US, East US, West US, North Central US, East US 2, North Europe, West Europe, Southeast Asia, East Asia, Japan West, Japan East, Brazil South]"
-  echo "  --instances    number of virtual machines deployed to the cloud service"
-  echo "  --username     Azure username"
-  echo "  --password     Azure password"
-  exit 1
 }
 
 arm_account_config_usage() {
@@ -284,10 +97,10 @@ arm_account_config_usage() {
 }
 
 create_arm_account() {
-  if [[ -z "$AZURE_USERNAME" ]] || [[ -z "$AZURE_PASSWORD" ]]; then
+  if [[ -z "$ARM_USERNAME" ]] || [[ -z "$ARM_PASSWORD" ]]; then
     azure login
   else
-    azure login --username $AZURE_USERNAME --password $AZURE_PASSWORD
+    azure login --username $ARM_USERNAME --password $ARM_PASSWORD --service-principal --tenant $ARM_TENANT_ID
   fi
   azure config mode arm
 
@@ -318,11 +131,7 @@ create_arm_account() {
 
 main() {
   if [ $# -ne 0 ]; then
-    if [ $1 == "deploy_dash" ] ; then
-      set_deploy_dash_params "$@"
-      print_deploy_dash_params
-      deploy_dash
-    elif [ $1 == "configure-arm" ]; then
+    if [ $1 == "configure-arm" ]; then
       set_arm_account_config_params "$@"
       print_arm_account_config_params
       create_arm_account
