@@ -100,7 +100,7 @@ azure_latest_vhd_by_prefix() {
 }
 
 azure_latest_image_name_form_atlas() {
-  curl -sL https://atlas.hashicorp.com/api/v1/artifacts/sequenceiq/cloudbreak/azure-arm.image/search \
+  curl -sL https://atlas.hashicorp.com/api/v1/artifacts/hortonworks/cloudbreak/azure-arm.image/search \
       |jq '.versions[0].metadata.image_name' -r
 }
 
