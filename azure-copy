@@ -45,7 +45,7 @@ azure_copy_everywhere() {
     for loc in $locations; do
       local destBlob="$loc/images/${ARM_DESTINATION_IMAGE_PREFIX}$imageName.vhd"
       debug "[COPY] $sourceBlob ==> $destBlob"
-      env DEBUG=$DEBUG STORAGE_ACCOUNT_LIST="$STORAGE_ACCOUNT_LIST" bash -c "azure_blob_copy $sourceBlob $destBlob" &
+      env DEBUG=$DEBUG STORAGE_ACCOUNT_LIST="$STORAGE_ACCOUNT_LIST" bash -c "azure_blob_copy $sourceBlob $destBlob"
     done \
       | tee -a checks.yml
 }
