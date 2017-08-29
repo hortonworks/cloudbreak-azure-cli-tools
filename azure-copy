@@ -14,10 +14,15 @@ debug() {
 alias r="source $BASH_SOURCE"
 
 azure_login() {
+    azure telemetry --disable
     if [[ "$ARM_CLIENT_ID" ]] && [[ "$ARM_CLIENT_SECRET" ]]; then
       azure login --username $ARM_CLIENT_ID --password $ARM_CLIENT_SECRET --service-principal --tenant $ARM_TENANT_ID
     fi
     azure config mode arm
+}
+
+azure_storage_account_list() {
+    export STORAGE_ACCOUNT_LIST=$(azure storage account list --json)
 }
 
 export_fns() {
@@ -25,7 +30,6 @@ export_fns() {
 }
 
 azure_copy_everywhere() {
-
     local imageName=${1:-"$(azure_latest_image_name_form_atlas)"}
     debug "imageName=$imageName"
     local vhdPath=$(azure_latest_vhd_by_prefix $imageName)
@@ -41,7 +45,7 @@ azure_copy_everywhere() {
     for loc in $locations; do
       local destBlob="$loc/images/${ARM_DESTINATION_IMAGE_PREFIX}$imageName.vhd"
       debug "[COPY] $sourceBlob ==> $destBlob"
-      env DEBUG=$DEBUG bash -c "azure_blob_copy $sourceBlob $destBlob" &
+      env DEBUG=$DEBUG STORAGE_ACCOUNT_LIST="$STORAGE_ACCOUNT_LIST" bash -c "azure_blob_copy $sourceBlob $destBlob" &
     done \
       | tee -a checks.yml
 }
@@ -71,18 +75,18 @@ azure_blob_copy() {
 }
 
 _azure_get_account_group() {
-    azure storage account list --json |  jq '.[]|select(.name|startswith("'${1:? storage account}'"))|.resourceGroup' -r
+    echo "$STORAGE_ACCOUNT_LIST" |  jq '.[]|select(.name|startswith("'${1:? storage account}'"))|.resourceGroup' -r
 }
 
 _azure_get_account_key() {
     declare storage=${1:?required: storage account}
     declare group=${2}
 
-    if [[ "$group" == "" ]]; then
+    if [[ -z "$group" ]]; then
         group=$(_azure_get_account_group ${storage})
     fi
 
-    azure storage account keys list -g $group $storage --json | jq .storageAccountKeys.key1 -r
+    azure storage account keys list -g $group $storage --json | jq -r .[].value | head -1
 }
 
 azure_latest_vhd_by_prefix() {
@@ -107,6 +111,7 @@ azure_latest_image_name_form_atlas() {
 main() {
   : ${DEBUG:=1}
   azure_login
+  azure_storage_account_list
   azure_copy_everywhere "$@"
 }
 
