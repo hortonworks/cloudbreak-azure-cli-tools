@@ -6,10 +6,9 @@ WORKDIR /bin
 
 RUN apk update && apk add bash coreutils git jq nodejs
 
-RUN git clone https://github.com/Azure/azure-xplat-cli.git /azure \
+RUN git clone -b v0.10.9-February2017 https://github.com/Azure/azure-xplat-cli.git /azure \
     && rm -rf /azure/test
 
-RUN cd /azure && git checkout v0.10.15-July2017
 RUN cd /azure && npm install
 
 ADD ./cli_tools /bin/
