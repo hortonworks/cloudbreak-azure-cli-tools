@@ -14,7 +14,7 @@ RUN cd /azure && npm install
 ADD ./cli_tools /bin/
 ADD ./azure-copy /bin/
 
-RUN curl -L https://github.com/hortonworks/pollprogress/releases/download/v0.1.0/pollprogress_0.1.0_Linux_x86_64.tgz | tar -xz -C /bin
+RUN curl -Lsf https://github.com/hortonworks/pollprogress/releases/download/v0.1.1/pollprogress_0.1.1_Linux_x86_64.tgz | tar -xz -C /bin
 ENV PATH /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/azure/bin
 
 ENTRYPOINT ["/bin/cli_tools"]

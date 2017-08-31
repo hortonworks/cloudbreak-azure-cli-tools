@@ -69,7 +69,7 @@ azure_blob_copy() {
         --dest-blob $dest_blob \
         --json 1>&2
 
-    local checkCmd="azure storage blob copy show -a $dest_account -k $dest_key --container $dest_container --blob $dest_blob --json | tee -a azure-copy-progress.json | jq 'if .copy.progress then .copy.progress elif .copyProgress then .copyProgress else \"42/42\" end' -r"
+    local checkCmd="azure storage blob copy show -a $dest_account -k $dest_key --container $dest_container --blob $dest_blob --json | tee -a azure-copy-progress.json | jq -r .copy.progress"
     debug "===> CHECK PROGRESS: $checkCmd"
     echo "$dest_account: $checkCmd"
 }
@@ -86,7 +86,7 @@ _azure_get_account_key() {
         group=$(_azure_get_account_group ${storage})
     fi
 
-    azure storage account keys list -g $group $storage --json | jq -r .[].value | head -1
+    azure storage account keys list -g $group $storage --json | jq -r .[0].value
 }
 
 azure_latest_vhd_by_prefix() {
