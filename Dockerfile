@@ -1,20 +1,14 @@
-FROM gliderlabs/alpine:3.2
+FROM azuresdk/azure-cli-python:2.0.16
 
 MAINTAINER Hortonworks
 
 WORKDIR /bin
 
-RUN apk update && apk add bash coreutils git jq nodejs
+RUN apk update && apk add bash coreutils jq curl
 
-RUN git clone -b v0.10.9-February2017 https://github.com/Azure/azure-xplat-cli.git /azure \
-    && rm -rf /azure/test
-
-RUN cd /azure && npm install
-
-ADD ./cli_tools /bin/
 ADD ./azure-copy /bin/
 
 RUN curl -Lsf https://github.com/hortonworks/pollprogress/releases/download/v0.1.1/pollprogress_0.1.1_Linux_x86_64.tgz | tar -xz -C /bin
 ENV PATH /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/azure/bin
 
-ENTRYPOINT ["/bin/cli_tools"]
+ENTRYPOINT ["/bin/pollprogress"]
