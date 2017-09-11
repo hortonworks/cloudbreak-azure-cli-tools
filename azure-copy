@@ -14,15 +14,13 @@ debug() {
 alias r="source $BASH_SOURCE"
 
 azure_login() {
-    azure telemetry --disable
     if [[ "$ARM_CLIENT_ID" ]] && [[ "$ARM_CLIENT_SECRET" ]]; then
-      azure login --username $ARM_CLIENT_ID --password $ARM_CLIENT_SECRET --service-principal --tenant $ARM_TENANT_ID
+      az login --username $ARM_CLIENT_ID --password $ARM_CLIENT_SECRET --service-principal --tenant $ARM_TENANT_ID
     fi
-    azure config mode arm
 }
 
 azure_storage_account_list() {
-    export STORAGE_ACCOUNT_LIST=$(azure storage account list --json)
+    export STORAGE_ACCOUNT_LIST=$(az storage account list --output json)
 }
 
 export_fns() {
@@ -58,18 +56,18 @@ azure_blob_copy() {
     read dest_account dest_container dest_blob <<< "$(echo $dest | sed 's:/: :'| sed 's:/: :')"
     local source_key=$(_azure_get_account_key $source_account)
     local dest_key=$(_azure_get_account_key $dest_account)
-    azure storage blob copy start \
-        -a $source_account \
-        -k $source_key \
-        --source-container $source_container \
-        --source-blob  $source_blob \
-        --dest-account-name $dest_account \
-        --dest-account-key $dest_key \
-        --dest-container $dest_container \
-        --dest-blob $dest_blob \
-        --json 1>&2
+    az storage blob copy start \
+    --source-account-name $source_account \
+    --source-account-key $source_key \
+    --source-blob $source_blob \
+    --source-container $source_container \
+    --destination-container $dest_container \
+    --destination-blob $dest_blob \
+    --account-name $dest_account \
+    --account-key $dest_key \
+    --output json 1>&2
 
-    local checkCmd="azure storage blob copy show -a $dest_account -k $dest_key --container $dest_container --blob $dest_blob --json | tee -a azure-copy-progress.json | jq -r .copy.progress"
+    local checkCmd="az storage blob show --account-name $dest_account --account-key $dest_key --container-name $dest_container --name $dest_blob --output json | tee -a azure-copy-progress.json | jq -r .properties.copy.progress"
     debug "===> CHECK PROGRESS: $checkCmd"
     echo "$dest_account: $checkCmd"
 }
@@ -86,20 +84,19 @@ _azure_get_account_key() {
         group=$(_azure_get_account_group ${storage})
     fi
 
-    azure storage account keys list -g $group $storage --json | jq -r .[0].value
+    az storage account keys list --resource-group $group --account-name $storage --output json | jq -r '.[0].value'
 }
 
 azure_latest_vhd_by_prefix() {
     declare imageName=${1:? required: imageName prefix like cloudbreak-2016-02-24}
 
-
     local key=$(_azure_get_account_key $ARM_STORAGE_ACCOUNT)
-    azure storage blob list \
-        -a $ARM_STORAGE_ACCOUNT \
-        -k $key \
-        --container system \
+    az storage blob list \
+        --account-name $ARM_STORAGE_ACCOUNT \
+        --account-key $key \
+        --container-name system \
         --prefix Microsoft.Compute/Images/packer/${imageName}-osDisk \
-        --json \
+        --output json \
         | jq '.[].name' -r
 }
 
