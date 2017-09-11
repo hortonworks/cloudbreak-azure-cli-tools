@@ -67,7 +67,7 @@ azure_blob_copy() {
     --account-key $dest_key \
     --output json 1>&2
 
-    local checkCmd="az storage blob show --account-name $dest_account --account-key $dest_key --container-name $dest_container --name $dest_blob --output json | tee -a azure-copy-progress.json | jq -r .properties.copy.progress"
+    local checkCmd="az storage blob show --account-name $dest_account --account-key $dest_key --container-name $dest_container --name $dest_blob --output json | jq -r .properties.copy.progress"
     debug "===> CHECK PROGRESS: $checkCmd"
     echo "$dest_account: $checkCmd"
 }
