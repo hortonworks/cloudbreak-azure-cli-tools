@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Accepted format is "Region 1:storageaccount1,Region 2:storageaccount2"
+: ${AZURE_STORAGE_ACCOUNTS?= required}
+
 if [[ "$TRACE" ]]; then
     : ${START_TIME:=$(date +%s)}
     export START_TIME
@@ -27,6 +30,12 @@ export_fns() {
     eval "$(sed -n  's/^\([A-Za-z0-9\-_]*\)() {/export -f \1/p' $BASH_SOURCE)"
 }
 
+get_storage_accounts_to_copy() {
+    for loc in "$(echo "$AZURE_STORAGE_ACCOUNTS" | tr "," "\n")"; do
+        echo "$loc" | cut -d":" -f2
+    done
+}
+
 azure_copy_everywhere() {
     local imageName=${1:-"$(azure_latest_image_name_form_atlas)"}
     debug "imageName=$imageName"
@@ -35,12 +44,9 @@ azure_copy_everywhere() {
     local sourceBlob="sequenceiqnortheurope2/system/${vhdPath}"
     debug "sourceBlob=$sourceBlob"
 
-    locations="sequenceiqbrazilsouth2 sequenceiqcentralus2 sequenceiqeastasia2 sequenceiqeastus12 sequenceiqeastus22 sequenceiqjapaneast2 sequenceiqjapanwest2 sequenceiqnortheurope2 sequenceiqorthcentralus2 sequenceiqouthcentralus2 sequenceiqsoutheastasia2 sequenceiqwesteurope2 sequenceiqwestus2 sequenceiqcanadaeast sequenceiqcanadacentral hwxaustraliaeast hwxaustralisoutheast hwxcentralindia hwxkoreacentral hwxkoreasouth hwxsouthindia hwxsouthuk hwxwestcentralus hwxwestuk hwxwestus2 hwxwestindia"
-    #locations="sequenceiqcentralus2 sequenceiqeastasia2 sequenceiqeastus12 sequenceiqeastus22 sequenceiqjapaneast2 sequenceiqjapanwest2 sequenceiqorthcentralus2 sequenceiqouthcentralus2 sequenceiqsoutheastasia2 sequenceiqwesteurope2"
-
     rm -f checks.yml
     export_fns
-    for loc in $locations; do
+    for loc in $(get_storage_accounts_to_copy); do
       local destBlob="$loc/images/${ARM_DESTINATION_IMAGE_PREFIX}$imageName.vhd"
       debug "[COPY] $sourceBlob ==> $destBlob"
       env DEBUG=$DEBUG STORAGE_ACCOUNT_LIST="$STORAGE_ACCOUNT_LIST" bash -c "azure_blob_copy $sourceBlob $destBlob"
@@ -102,7 +108,7 @@ azure_latest_vhd_by_prefix() {
 
 azure_latest_image_name_form_atlas() {
   curl -sL https://atlas.hashicorp.com/api/v1/artifacts/hortonworks/cloudbreak/azure-arm.image/search \
-      |jq '.versions[0].metadata.image_name' -r
+      | jq '.versions[0].metadata.image_name' -r
 }
 
 main() {
@@ -112,4 +118,4 @@ main() {
   azure_copy_everywhere "$@"
 }
 
-[[ "$0" == "$BASH_SOURCE" ]] && main "$@" || true
+[[ "$0" == "$BASH_SOURCE" ]] && main "$@" || :
