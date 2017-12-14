@@ -4,9 +4,9 @@
 : ${AZURE_STORAGE_ACCOUNTS?= required}
 
 if [[ "$TRACE" ]]; then
-    : ${START_TIME:=$(date +%s)}
-    export START_TIME
-    export PS4='+ [TRACE $BASH_SOURCE:$LINENO][ellapsed: $(( $(date +%s) -  $START_TIME ))] '
+#    : ${START_TIME:=$(date +%s)}
+#    export START_TIME
+#    export PS4='+ [TRACE $BASH_SOURCE:$LINENO][ellapsed: $(( $(date +%s) -  $START_TIME ))] '
     set -x
 fi
 
@@ -107,7 +107,7 @@ azure_latest_vhd_by_prefix() {
 }
 
 azure_latest_image_name_form_atlas() {
-  curl -sL https://atlas.hashicorp.com/api/v1/artifacts/hortonworks/cloudbreak/azure-arm.image/search \
+  curl -sfL https://atlas.hashicorp.com/api/v1/artifacts/hortonworks/cloudbreak/azure-arm.image/search \
       | jq '.versions[0].metadata.image_name' -r
 }
 
