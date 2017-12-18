@@ -54,6 +54,24 @@ azure_copy_everywhere() {
       | tee -a checks.yml
 }
 
+azure_blob_check() {
+    declare dest=${1:? required dest: account/container/blob}
+    read dest_account dest_container dest_blob <<< "$(echo $dest | sed 's:/: :'| sed 's:/: :')"
+    debug "$dest_account"
+    debug "$dest_container"
+    debug "$dest_blob"
+    local dest_key=$(_azure_get_account_key $dest_account)
+    debug "$dest_key"
+    local result=$(az storage blob exists \
+    --container-name $dest_container \
+    --name $dest_blob \
+    --account-name $dest_account \
+    --account-key $dest_key \
+    --output json | jq .exists)
+    debug "$result"
+
+}
+
 azure_blob_copy() {
     declare source=${1:? required source: account/container/blob}
     declare dest=${2:? required dest: account/container/blob}
@@ -73,7 +91,7 @@ azure_blob_copy() {
     --account-key $dest_key \
     --output json 1>&2
 
-    local checkCmd="az storage blob show --account-name $dest_account --account-key $dest_key --container-name $dest_container --name $dest_blob --output json | jq -r .properties.copy.progress"
+    local checkCmd="az storage blob show --account-name $dest_account --account-key $dest_key --container-name $dest_container --name $dest_blob --output json | jq -r '.properties.copy | .progress, .status'"
     debug "===> CHECK PROGRESS: $checkCmd"
     echo "$dest_account: $checkCmd"
 }
