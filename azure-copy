@@ -69,7 +69,7 @@ azure_blob_check() {
     --account-key $dest_key \
     --output json | jq .exists)
     debug "$result"
-
+    
 }
 
 azure_blob_copy() {

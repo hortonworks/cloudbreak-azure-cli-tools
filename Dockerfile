@@ -1,4 +1,4 @@
-FROM azuresdk/azure-cli-python:2.0.16
+FROM azuresdk/azure-cli-python:latest
 
 MAINTAINER Hortonworks
 
