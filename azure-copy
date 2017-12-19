@@ -23,7 +23,8 @@ azure_login() {
 }
 
 azure_storage_account_list() {
-    export STORAGE_ACCOUNT_LIST=$(az storage account list --output json)
+    STORAGE_ACCOUNT_LIST_FILE=$(mktemp)
+    az storage account list --output json > "$STORAGE_ACCOUNT_LIST_FILE"
 }
 
 export_fns() {
@@ -49,9 +50,10 @@ azure_copy_everywhere() {
     for loc in $(get_storage_accounts_to_copy); do
       local destBlob="$loc/images/${ARM_DESTINATION_IMAGE_PREFIX}$imageName.vhd"
       debug "[COPY] $sourceBlob ==> $destBlob"
-      env DEBUG=$DEBUG STORAGE_ACCOUNT_LIST="$STORAGE_ACCOUNT_LIST" bash -c "azure_blob_copy $sourceBlob $destBlob"
+      env DEBUG=$DEBUG STORAGE_ACCOUNT_LIST_FILE="$STORAGE_ACCOUNT_LIST_FILE" bash -c "azure_blob_copy $sourceBlob $destBlob"
     done \
       | tee -a checks.yml
+
 }
 
 azure_blob_check() {
@@ -69,7 +71,7 @@ azure_blob_check() {
     --account-key $dest_key \
     --output json | jq .exists)
     debug "$result"
-    
+
 }
 
 azure_blob_copy() {
@@ -97,7 +99,7 @@ azure_blob_copy() {
 }
 
 _azure_get_account_group() {
-    echo "$STORAGE_ACCOUNT_LIST" |  jq '.[]|select(.name|startswith("'${1:? storage account}'"))|.resourceGroup' -r
+    cat "$STORAGE_ACCOUNT_LIST_FILE" |  jq '.[]|select(.name|startswith("'${1:? storage account}'"))|.resourceGroup' -r
 }
 
 _azure_get_account_key() {
@@ -134,6 +136,7 @@ main() {
   azure_login
   azure_storage_account_list
   azure_copy_everywhere "$@"
+  rm "$STORAGE_ACCOUNT_LIST_FILE"
 }
 
 [[ "$0" == "$BASH_SOURCE" ]] && main "$@" || :
