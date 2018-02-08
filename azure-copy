@@ -2,6 +2,7 @@
 
 # Accepted format is "Region 1:storageaccount1,Region 2:storageaccount2"
 : ${AZURE_STORAGE_ACCOUNTS?= required}
+: ${AZURE_IMAGE_NAME?= required}
 
 if [[ "$TRACE" ]]; then
 #    : ${START_TIME:=$(date +%s)}
@@ -38,9 +39,7 @@ get_storage_accounts_to_copy() {
 }
 
 azure_copy_everywhere() {
-    local imageName=${1:-"$(azure_latest_image_name_form_atlas)"}
-    debug "imageName=$imageName"
-    local vhdPath=$(azure_latest_vhd_by_prefix $imageName)
+    local vhdPath=$(azure_latest_vhd_by_prefix $AZURE_IMAGE_NAME)
     debug "vhdPath=$vhdPath"
     local sourceBlob="sequenceiqnortheurope2/system/${vhdPath}"
     debug "sourceBlob=$sourceBlob"
@@ -126,16 +125,11 @@ azure_latest_vhd_by_prefix() {
         | jq '.[].name' -r
 }
 
-azure_latest_image_name_form_atlas() {
-  curl -sfL https://atlas.hashicorp.com/api/v1/artifacts/hortonworks/cloudbreak/azure-arm.image/search \
-      | jq '.versions[0].metadata.image_name' -r
-}
-
 main() {
   : ${DEBUG:=1}
   azure_login
   azure_storage_account_list
-  azure_copy_everywhere "$@"
+  azure_copy_everywhere
   rm "$STORAGE_ACCOUNT_LIST_FILE"
 }
 
