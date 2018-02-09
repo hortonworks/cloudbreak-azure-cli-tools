@@ -47,7 +47,7 @@ azure_copy_everywhere() {
     rm -f checks.yml
     export_fns
     for loc in $(get_storage_accounts_to_copy); do
-      local destBlob="$loc/images/${ARM_DESTINATION_IMAGE_PREFIX}$imageName.vhd"
+      local destBlob="$loc/images/${ARM_DESTINATION_IMAGE_PREFIX}$AZURE_IMAGE_NAME.vhd"
       debug "[COPY] $sourceBlob ==> $destBlob"
       env DEBUG=$DEBUG STORAGE_ACCOUNT_LIST_FILE="$STORAGE_ACCOUNT_LIST_FILE" bash -c "azure_blob_copy $sourceBlob $destBlob"
     done \
