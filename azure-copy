@@ -90,6 +90,8 @@ azure_blob_copy() {
     --destination-blob $dest_blob \
     --account-name $dest_account \
     --account-key $dest_key \
+    --debug \
+    --timeout "${REQUEST_TIMEOUT:-15}" \
     --output json 1>&2
 
     local checkCmd="az storage blob show --account-name $dest_account --account-key $dest_key --container-name $dest_container --name $dest_blob --output json | jq -r '.properties.copy | .progress, .status'"
