@@ -1,5 +1,5 @@
 VERSION=$(shell git  describe --tags --abbrev=0)
-DOCKERHUB_REPO=sequenceiq/azure-cli-tools
+DOCKERHUB_REPO=hortonworks/azure-cli-tools
 
 deps:
 	go get github.com/progrium/dockerhub-tag
