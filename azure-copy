@@ -46,13 +46,13 @@ azure_copy_everywhere() {
     debug "sourceBlob=$sourceBlob"
 
     rm -f checks.yml
+    touch checks.yml
     export_fns
     for loc in $(get_storage_accounts_to_copy); do
       local destBlob="$loc/images/${ARM_DESTINATION_IMAGE_PREFIX}$AZURE_IMAGE_NAME.vhd"
       debug "[COPY] $sourceBlob ==> $destBlob"
       env DEBUG=$DEBUG STORAGE_ACCOUNT_LIST_FILE="$STORAGE_ACCOUNT_LIST_FILE" bash -c "azure_blob_copy $sourceBlob $destBlob"
-    done \
-      | tee -a checks.yml
+    done
 
 }
 
@@ -97,7 +97,7 @@ azure_blob_copy() {
 
     local checkCmd="az storage blob show --account-name $dest_account --account-key $dest_key --container-name $dest_container --name $dest_blob --output json | jq -r '.properties.copy | .progress, .status'"
     debug "===> CHECK PROGRESS: $checkCmd"
-    echo "$dest_account: $checkCmd"
+    echo "$dest_account: $checkCmd" >> checks.yml
 }
 
 _azure_get_account_group() {
