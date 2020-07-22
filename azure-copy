@@ -101,7 +101,7 @@ azure_blob_copy() {
 }
 
 _azure_get_account_group() {
-    cat "$STORAGE_ACCOUNT_LIST_FILE" |  jq '.[]|select(.name|startswith("'${1:? storage account}'"))|.resourceGroup' -r
+    cat "$STORAGE_ACCOUNT_LIST_FILE" |  jq '.[]|select(.name|startswith("'${1:? storage account}'"))|.resourceGroup' -r |head -1
 }
 
 _azure_get_account_key() {
