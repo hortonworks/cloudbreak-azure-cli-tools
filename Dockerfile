@@ -1,4 +1,4 @@
-FROM azuresdk/azure-cli-python:latest
+FROM mcr.microsoft.com/azure-cli:latest
 
 MAINTAINER Hortonworks
 
