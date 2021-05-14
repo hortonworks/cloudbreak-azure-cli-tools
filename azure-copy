@@ -91,6 +91,7 @@ azure_blob_copy() {
     --destination-blob $dest_blob \
     --account-name $dest_account \
     --account-key $dest_key \
+    --destination-if-none-match "*" \
     --debug \
     --timeout "${REQUEST_TIMEOUT:-15}" \
     --output json 1>&2
