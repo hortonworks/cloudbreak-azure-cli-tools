@@ -24,9 +24,14 @@ azure_login() {
     fi
 }
 
+_delete_azure_storage_account_list() {
+    rm "$STORAGE_ACCOUNT_LIST_FILE"
+}
+
 azure_storage_account_list() {
     STORAGE_ACCOUNT_LIST_FILE=$(mktemp)
     az storage account list --output json > "$STORAGE_ACCOUNT_LIST_FILE"
+    trap _delete_azure_storage_account_list EXIT
 }
 
 export_fns() {
@@ -102,7 +107,13 @@ azure_blob_copy() {
 }
 
 _azure_get_account_group() {
-    cat "$STORAGE_ACCOUNT_LIST_FILE" |  jq '.[]|select(.name|startswith("'${1:? storage account}'"))|.resourceGroup' -r |head -1
+    declare storage=${1:? storage account}
+    local account_group=$(cat "$STORAGE_ACCOUNT_LIST_FILE" | jq '.[]|select(.name|startswith("'${storage}'"))|.resourceGroup' -r | head -1)
+    if [[ -z "$account_group" ]]; then
+        debug "Failed to get account group for storage account ${storage}"
+        exit 1
+    fi
+    echo $account_group
 }
 
 _azure_get_account_key() {
@@ -113,7 +124,12 @@ _azure_get_account_key() {
         group=$(_azure_get_account_group ${storage})
     fi
 
-    az storage account keys list --resource-group $group --account-name $storage --output json | jq -r '.[0].value'
+    local account_key=$(az storage account keys list --resource-group $group --account-name $storage --output json | jq -r '.[0].value')
+    if [[ -z "$account_key" ]]; then
+        debug "Failed to get account key for storage account ${storage} in group ${group}"
+        exit 1
+    fi
+    echo $account_key
 }
 
 azure_latest_vhd_by_prefix() {
@@ -134,7 +150,6 @@ main() {
   azure_login
   azure_storage_account_list
   azure_copy_everywhere
-  rm "$STORAGE_ACCOUNT_LIST_FILE"
 }
 
-[[ "$0" == "$BASH_SOURCE" ]] && main "$@" || :
+[[ "$0" == "$BASH_SOURCE" ]] && main "$@"
