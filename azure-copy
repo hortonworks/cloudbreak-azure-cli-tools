@@ -67,7 +67,7 @@ azure_blob_check() {
     debug "$dest_account"
     debug "$dest_container"
     debug "$dest_blob"
-    local dest_key=$(_azure_get_account_key $dest_account)
+    local dest_key=$(_azure_get_account_key $dest_account) || exit 1
     debug "$dest_key"
     local result=$(az storage blob exists \
     --container-name $dest_container \
@@ -85,8 +85,8 @@ azure_blob_copy() {
 
     read source_account source_container source_blob <<< "$(echo $source | sed 's:/: :'| sed 's:/: :')"
     read dest_account dest_container dest_blob <<< "$(echo $dest | sed 's:/: :'| sed 's:/: :')"
-    local source_key=$(_azure_get_account_key $source_account)
-    local dest_key=$(_azure_get_account_key $dest_account)
+    local source_key=$(_azure_get_account_key $source_account) || exit 1
+    local dest_key=$(_azure_get_account_key $dest_account) || exit 1
     az storage blob copy start \
     --source-account-name $source_account \
     --source-account-key $source_key \
@@ -121,7 +121,7 @@ _azure_get_account_key() {
     declare group=${2}
 
     if [[ -z "$group" ]]; then
-        group=$(_azure_get_account_group ${storage})
+        group=$(_azure_get_account_group ${storage}) || exit 1
     fi
 
     local account_key=$(az storage account keys list --resource-group $group --account-name $storage --output json | jq -r '.[0].value')
@@ -135,7 +135,7 @@ _azure_get_account_key() {
 azure_latest_vhd_by_prefix() {
     declare imageName=${1:? required: imageName prefix like cloudbreak-2016-02-24}
 
-    local key=$(_azure_get_account_key $ARM_STORAGE_ACCOUNT)
+    local key=$(_azure_get_account_key $ARM_STORAGE_ACCOUNT) || exit 1
     az storage blob list \
         --account-name $ARM_STORAGE_ACCOUNT \
         --account-key $key \
