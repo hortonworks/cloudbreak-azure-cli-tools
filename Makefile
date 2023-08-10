@@ -1,15 +1,12 @@
 VERSION=$(shell git  describe --tags --abbrev=0)
-DOCKERHUB_REPO=hortonworks/cloudbreak-azure-cli-tools
-
-deps:
-	go get github.com/progrium/dockerhub-tag
+REPOSITORY=cloudbreak-tools/cloudbreak-azure-cli-tools
 
 build:
-	docker build -t $(DOCKERHUB_REPO):$(VERSION) .
+	docker build -t $(REPOSITORY):$(VERSION) .
 
 build-dev:
-	docker build -t $(DOCKERHUB_REPO):dev .
+	docker build -t $(REPOSITORY):dev .
 
-dockerhub-tag:
-	dockerhub-tag set $(DOCKERHUB_REPO) $(VERSION) $(VERSION) /
-
+release:
+	docker tag $(REPOSITORY):$(VERSION) docker-sandbox.infra.cloudera.com/$(REPOSITORY):$(VERSION)
+	docker push docker-sandbox.infra.cloudera.com/$(REPOSITORY):$(VERSION)
