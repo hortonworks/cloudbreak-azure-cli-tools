@@ -1,13 +1,14 @@
 VERSION=$(shell git  describe --tags --abbrev=0)
 REPOSITORY=cloudbreak-tools/cloudbreak-azure-cli-tools
+PLATFORMS=linux/amd64,linux/arm64
 
 .PHONY: build build-dev release release-dev dev-all
 
 build:
-	docker build -t $(REPOSITORY):$(VERSION) .
+	docker build --platform $(PLATFORMS) -t $(REPOSITORY):$(VERSION) .
 
 build-dev:
-	docker build -t $(REPOSITORY):dev .
+	docker build --platform $(PLATFORMS) -t $(REPOSITORY):dev .
 
 release:
 	docker tag $(REPOSITORY):$(VERSION) docker-sandbox.infra.cloudera.com/$(REPOSITORY):$(VERSION)
