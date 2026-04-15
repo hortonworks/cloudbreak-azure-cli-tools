@@ -47,7 +47,11 @@ get_storage_accounts_to_copy() {
 azure_copy_everywhere() {
     local vhdPath=$(azure_latest_vhd_by_prefix $AZURE_IMAGE_NAME)
     debug "vhdPath=$vhdPath"
-    local sourceBlob="$ARM_STORAGE_ACCOUNT/system/${vhdPath}"
+    if [ -z "$vhdPath" ]; then
+        echo vhdPath is empty.
+        exit 1
+    fi
+    local sourceBlob="$ARM_STORAGE_ACCOUNT/images/${vhdPath}"
     debug "sourceBlob=$sourceBlob"
 
     rm -f checks.yml
@@ -139,8 +143,8 @@ azure_latest_vhd_by_prefix() {
     az storage blob list \
         --account-name $ARM_STORAGE_ACCOUNT \
         --account-key $key \
-        --container-name system \
-        --prefix Microsoft.Compute/Images/packer/${imageName}-osDisk \
+        --container-name images \
+        --prefix ${imageName}.vhd \
         --output json \
         | jq '.[].name' -r
 }
