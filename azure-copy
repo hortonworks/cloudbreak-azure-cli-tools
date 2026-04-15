@@ -47,6 +47,10 @@ get_storage_accounts_to_copy() {
 azure_copy_everywhere() {
     local vhdPath=$(azure_latest_vhd_by_prefix $AZURE_IMAGE_NAME)
     debug "vhdPath=$vhdPath"
+    if [ -z "$vhdPath" ]; then
+        echo vhdPath is empty.
+        exit 1
+    fi
     local sourceBlob="$ARM_STORAGE_ACCOUNT/images/${vhdPath}"
     debug "sourceBlob=$sourceBlob"
 
